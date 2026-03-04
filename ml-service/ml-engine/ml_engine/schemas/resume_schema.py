@@ -1,9 +1,15 @@
 """
 Data schema representing the normalized ATS structure.
-Using a simple class keeps memory overhead low.
+
+This object is the central data container used across the pipeline.
+It stores raw text, detected sections, normalized fields, and
+candidate identity entities.
+
+The design intentionally stays lightweight to avoid unnecessary
+memory overhead during large-scale resume processing.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 class ResumeSchema:
@@ -12,8 +18,27 @@ class ResumeSchema:
     """
 
     def __init__(self):
+
+        # -----------------------------
+        # Raw resume data
+        # -----------------------------
+
         self.raw_text: str = ""
         self.sections: Dict[str, str] = {}
+
+        # -----------------------------
+        # Candidate identity entities
+        # (Stage-2 extraction)
+        # -----------------------------
+
+        self.name: Optional[str] = None
+        self.email: Optional[str] = None
+        self.phone: Optional[str] = None
+        self.location: Optional[str] = None
+
+        # -----------------------------
+        # Structured ATS fields
+        # -----------------------------
 
         self.skills: List[str] = []
         self.education: List[str] = []
@@ -23,10 +48,21 @@ class ResumeSchema:
         """
         Convert schema to dictionary for JSON/API usage.
         """
+
         return {
-            "raw_text": self.raw_text,
-            "sections": self.sections,
+
+            # Identity
+            "name": self.name,
+            "email": self.email,
+            "phone": self.phone,
+            "location": self.location,
+
+            # ATS structured fields
             "skills": self.skills,
             "education": self.education,
             "experience": self.experience,
+
+            # Raw parsing results
+            "sections": self.sections,
+            "raw_text": self.raw_text,
         }

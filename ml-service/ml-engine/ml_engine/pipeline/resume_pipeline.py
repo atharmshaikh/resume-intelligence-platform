@@ -18,7 +18,7 @@ from ml_engine.parsers.docx_parser import DocxParser
 from ml_engine.utils.text_cleaner import clean_text
 from ml_engine.extraction.section_detector import detect_sections
 from ml_engine.normalization.ats_builder import build_ats_structure
-
+from ml_engine.extraction.entity_extractor import extract_entities
 
 class ResumePipeline:
     """
@@ -71,7 +71,7 @@ class ResumePipeline:
         raise ValueError(f"No parser available for {suffix}")
 
     from typing import Union
-    
+
     def parse(self, file_path: Union[str, Path]):
         """
         Execute resume processing pipeline.
@@ -108,5 +108,13 @@ class ResumePipeline:
         # 5. Build ATS structure
         # -------------------------
         resume_object = build_ats_structure(cleaned_text, sections)
+        resume_object = build_ats_structure(cleaned_text, sections)
 
+        entities = extract_entities(cleaned_text)
+
+        resume_object.name = entities["name"]
+        resume_object.email = entities["email"]
+        resume_object.phone = entities["phone"]
+        resume_object.location = entities["location"]
+        
         return resume_object
