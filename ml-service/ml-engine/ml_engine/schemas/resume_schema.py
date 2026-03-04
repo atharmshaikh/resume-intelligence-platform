@@ -43,8 +43,13 @@ class ResumeSchema:
         self.skills: List[str] = []
         self.education: List[str] = []
         self.experience: List[str] = []
-
-        self.features = {}
+   
+        # -----------------------------
+        # Derived pipeline outputs
+        # -----------------------------
+        self.features: Dict = {}
+        self.scores: Dict = {}
+        self.quality: Dict = {}
 
     def to_dict(self) -> dict:
         """
@@ -69,4 +74,6 @@ class ResumeSchema:
             "raw_text": self.raw_text,
 
             "features": self.features,
+            "scores": self.scores,
+            "quality": self.quality
         }
