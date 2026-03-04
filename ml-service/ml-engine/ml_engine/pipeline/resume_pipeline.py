@@ -11,6 +11,7 @@ Pipeline stages:
 
 import os
 from pathlib import Path
+from typing import Union
 
 from ml_engine.config.settings import SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_MB
 from ml_engine.parsers.pdf_parser import PDFParser
@@ -20,6 +21,9 @@ from ml_engine.extraction.section_detector import detect_sections
 from ml_engine.normalization.ats_builder import build_ats_structure
 from ml_engine.extraction.entity_extractor import extract_entities
 from ml_engine.features.feature_extractor import extract_features
+from ml_engine.scoring.ats_scorer import score_resume
+from ml_engine.quality.typo_checker import count_typos
+
 class ResumePipeline:
     """
     Central pipeline controller for resume parsing.
@@ -70,14 +74,12 @@ class ResumePipeline:
 
         raise ValueError(f"No parser available for {suffix}")
 
-    from typing import Union
-
     def parse(self, file_path: Union[str, Path]):
         """
         Execute resume processing pipeline.
         """
 
-        file_path = Path(file_path)
+        file_path = Path(file_path).expanduser().resolve()
 
         # -------------------------
         # 1. Validate file
@@ -91,8 +93,8 @@ class ResumePipeline:
 
         raw_text = parser.parse(str(file_path))
 
-        if not raw_text:
-            raise ValueError("Resume parsing produced empty text")
+        if not raw_text or len(raw_text.strip()) < 50:
+            raise ValueError("Resume parsing produced insufficient text")
 
         # -------------------------
         # 3. Clean extracted text
@@ -114,15 +116,27 @@ class ResumePipeline:
         # -------------------------
         entities = extract_entities(cleaned_text)
 
-        resume_object.name = entities["name"]
-        resume_object.email = entities["email"]
-        resume_object.phone = entities["phone"]
-        resume_object.location = entities["location"]
+        resume_object.name = entities.get("name")
+        resume_object.email = entities.get("email")
+        resume_object.phone = entities.get("phone")
+        resume_object.location = entities.get("location")
         
         # -------------------------
         # 7. Feature extraction (Stage 3)
         # -------------------------
         features = extract_features(resume_object)
         resume_object.features = features
+        
+        # -------------------------
+        # 8. ATS scoring
+        # -------------------------
+        scores = score_resume(features, resume_object.raw_text)
+        resume_object.scores = scores
+
+        # -------------------------
+        # 9. Quality analysis
+        # -------------------------
+        resume_object.quality = {}
+        resume_object.quality["typos"] = count_typos(cleaned_text)
         
         return resume_object

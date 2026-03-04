@@ -4,7 +4,7 @@ Feature extraction module.
 Converts parsed resume data into numerical features
 that can later be used for machine learning models.
 """
-
+import re
 from ml_engine.schemas.resume_schema import ResumeSchema
 
 
@@ -45,7 +45,13 @@ def extract_features(resume: ResumeSchema) -> dict:
     # Education
     # -----------------------------
 
-    features["education_count"] = len(resume.education)
+    education_entries = 0
+
+    for line in resume.education:
+        if "bachelor" in line.lower() or "master" in line.lower() or "bca" in line.lower() or "mca" in line.lower():
+            education_entries += 1
+
+    features["education_count"] = education_entries
 
     # -----------------------------
     # Experience
@@ -57,7 +63,8 @@ def extract_features(resume: ResumeSchema) -> dict:
     # Resume length
     # -----------------------------
 
-    features["resume_word_count"] = len(resume.raw_text.split())
+    word_count = len(re.findall(r"\b\w+\b", resume.raw_text))
+    features["resume_word_count"] = word_count
 
     # -----------------------------
     # Projects
