@@ -19,7 +19,7 @@ from ml_engine.utils.text_cleaner import clean_text
 from ml_engine.extraction.section_detector import detect_sections
 from ml_engine.normalization.ats_builder import build_ats_structure
 from ml_engine.extraction.entity_extractor import extract_entities
-
+from ml_engine.features.feature_extractor import extract_features
 class ResumePipeline:
     """
     Central pipeline controller for resume parsing.
@@ -108,13 +108,21 @@ class ResumePipeline:
         # 5. Build ATS structure
         # -------------------------
         resume_object = build_ats_structure(cleaned_text, sections)
-        resume_object = build_ats_structure(cleaned_text, sections)
 
+        # -------------------------
+        # 6. Extract entities
+        # -------------------------
         entities = extract_entities(cleaned_text)
 
         resume_object.name = entities["name"]
         resume_object.email = entities["email"]
         resume_object.phone = entities["phone"]
         resume_object.location = entities["location"]
+        
+        # -------------------------
+        # 7. Feature extraction (Stage 3)
+        # -------------------------
+        features = extract_features(resume_object)
+        resume_object.features = features
         
         return resume_object

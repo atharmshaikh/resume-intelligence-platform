@@ -44,6 +44,8 @@ class ResumeSchema:
         self.education: List[str] = []
         self.experience: List[str] = []
 
+        self.features = {}
+
     def to_dict(self) -> dict:
         """
         Convert schema to dictionary for JSON/API usage.
@@ -65,4 +67,6 @@ class ResumeSchema:
             # Raw parsing results
             "sections": self.sections,
             "raw_text": self.raw_text,
+
+            "features": self.features,
         }
