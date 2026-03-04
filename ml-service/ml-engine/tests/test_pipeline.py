@@ -1,6 +1,4 @@
-"""
-Basic test runner for resume pipeline.
-"""
+from pathlib import Path
 
 from ml_engine.pipeline.resume_pipeline import ResumePipeline
 
@@ -9,12 +7,13 @@ def main():
 
     pipeline = ResumePipeline()
 
-    file_path = "sample_resumes/test_resume.pdf"
+    # Resolve path relative to project
+    base_dir = Path(__file__).resolve().parents[1]
+    resume_file = base_dir / "sample_resumes" / "test_resume.pdf"
 
-    result = pipeline.parse(file_path)
+    result = pipeline.parse(resume_file)
 
     print("\nParsed Resume\n")
-
     print(result.to_dict())
 
 
