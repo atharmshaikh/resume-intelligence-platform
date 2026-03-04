@@ -1,7 +1,103 @@
-# Byte-compiled / optimized / DLL files
+# -----------------------------
+# PYTHON
+# -----------------------------
 __pycache__/
-*.py[codz]
-*$py.class
+*.pyc
+*.pyo
+*.pyd
+*.pyc.*
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# -----------------------------
+# ML / DATA
+# -----------------------------
+data/
+datasets/
+models/
+checkpoints/
+artifacts/
+
+*.h5
+*.pt
+*.pth
+*.onnx
+*.joblib
+*.pickle
+*.pkl
+
+# -----------------------------
+# JUPYTER
+# -----------------------------
+.ipynb_checkpoints/
+
+# -----------------------------
+# LOGS
+# -----------------------------
+*.log
+logs/
+
+# -----------------------------
+# OS
+# -----------------------------
+.DS_Store
+Thumbs.db
+
+# -----------------------------
+# EDITORS
+# -----------------------------
+.vscode/
+.idea/
+*.swp
+
+# -----------------------------
+# NODE (future frontend)
+# -----------------------------
+node_modules/
+dist/
+build/
+
+# -----------------------------
+# ENV FILES
+# -----------------------------
+.env
+.env.*
+!.env.example
+
+# -----------------------------
+# TEST CACHE
+# -----------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# -----------------------------
+# COVERAGE
+# -----------------------------
+.coverage
+coverage.xml
+htmlcov/
+
+# -----------------------------
+# TEMP FILES
+# -----------------------------
+tmp/
+temp/
+
+# -----------------------------
+# LOCAL CONFIG
+# -----------------------------
+*.local
 
 # C extensions
 *.so
@@ -205,3 +301,6 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Sample resumes (local testing only)
+sample_resumes/
