@@ -1,0 +1,16 @@
+python
+java
+c++
+c#
+machine learning
+deep learning
+tensorflow
+pytorch
+docker
+kubernetes
+aws
+azure
+postgresql
+mongodb
+spark
+kafka

@@ -5,6 +5,9 @@ Produces interpretable resume quality scores.
 """
 from ml_engine.quality.typo_checker import typo_score
 
+def _safe(features: dict, key: str, default=0):
+    return features.get(key, default)
+
 def score_resume(features: dict, raw_text: str) -> dict:
 
     scores = {}
@@ -14,10 +17,10 @@ def score_resume(features: dict, raw_text: str) -> dict:
     # -------------------------
 
     contact_score = (
-        features["has_name"]
-        + features["has_email"]
-        + features["has_phone"]
-        + features["has_location"]
+        _safe(features, "has_name")
+        + _safe(features, "has_email")
+        + _safe(features, "has_phone")
+        + _safe(features, "has_location")
     ) / 4 * 100
 
     # -------------------------
@@ -25,10 +28,10 @@ def score_resume(features: dict, raw_text: str) -> dict:
     # -------------------------
 
     structure_points = (
-        features["has_skills_section"]
-        + features["has_education_section"]
-        + features["has_projects_section"]
-    )
+        _safe(features, "has_skills_section")
+        + _safe(features, "has_education_section")
+        + _safe(features, "has_projects_section")
+    )   
 
     structure_score = structure_points / 3 * 100
 
@@ -36,11 +39,11 @@ def score_resume(features: dict, raw_text: str) -> dict:
     # Content score
     # -------------------------
 
-    skill_score = min(features["skills_count"] / 10, 1)
+    skill_score = min(_safe(features, "skills_count") / 10, 1)
 
-    project_score = features["has_projects"]
+    project_score = _safe(features, "has_projects")
 
-    education_score = min(features["education_count"], 1)
+    education_score = min(_safe(features, "education_count"), 1)
 
     content_score = (skill_score + project_score + education_score) / 3 * 100
 
@@ -48,7 +51,7 @@ def score_resume(features: dict, raw_text: str) -> dict:
     # Resume length score
     # -------------------------
 
-    word_count = features["resume_word_count"]
+    word_count = _safe(features, "resume_word_count")
 
     if word_count < 200:
         length_score = 50
@@ -77,6 +80,8 @@ def score_resume(features: dict, raw_text: str) -> dict:
         + typo_quality * 0.15
     )
 
+    ats_score = max(0, min(100, ats_score))
+    
     scores["ats_score"] = round(ats_score, 2)
     scores["contact_score"] = round(contact_score, 2)
     scores["structure_score"] = round(structure_score, 2)

@@ -1,0 +1,13 @@
+sql
+pandas
+numpy
+linux
+git
+django
+flask
+fastapi
+node
+react
+html
+css
+javascript

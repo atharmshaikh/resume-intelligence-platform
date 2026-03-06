@@ -66,20 +66,24 @@ class ResumePipeline:
 
         suffix = file_path.suffix.lower()
 
-        if suffix == ".pdf":
-            return self.pdf_parser
+        parser_map = {
+            ".pdf": self.pdf_parser,
+            ".docx": self.docx_parser,
+        }
 
-        if suffix == ".docx":
-            return self.docx_parser
+        parser = parser_map.get(suffix)
 
-        raise ValueError(f"No parser available for {suffix}")
+        if not parser:
+            raise ValueError(f"No parser available for {suffix}")
+
+        return parser
 
     def parse(self, file_path: Union[str, Path]):
         """
         Execute resume processing pipeline.
         """
 
-        file_path = Path(file_path).expanduser().resolve()
+        file_path = Path(file_path).expanduser().resolve(strict=True)
 
         # -------------------------
         # 1. Validate file
@@ -94,12 +98,18 @@ class ResumePipeline:
         raw_text = parser.parse(str(file_path))
 
         if not raw_text or len(raw_text.strip()) < 50:
-            raise ValueError("Resume parsing produced insufficient text")
-
+            raise ValueError(
+                f"Parser returned insufficient text for resume: {file_path.name}"
+            )
+        
         # -------------------------
         # 3. Clean extracted text
         # -------------------------
         cleaned_text = clean_text(raw_text)
+
+        # Prevent excessive processing on very large resumes
+        if len(cleaned_text) > 200000:
+            cleaned_text = cleaned_text[:200000]
 
         # -------------------------
         # 4. Detect sections
@@ -111,15 +121,26 @@ class ResumePipeline:
         # -------------------------
         resume_object = build_ats_structure(cleaned_text, sections)
 
+        # Ensure schema retains cleaned raw text
+        resume_object.raw_text = cleaned_text
+
+        # Candidate identity extraction (name, email, phone, location)
         # -------------------------
         # 6. Extract entities
         # -------------------------
         entities = extract_entities(cleaned_text)
 
-        resume_object.name = entities.get("name")
-        resume_object.email = entities.get("email")
-        resume_object.phone = entities.get("phone")
-        resume_object.location = entities.get("location")
+        if entities.get("name"):
+            resume_object.name = entities["name"]
+
+        if entities.get("email"):
+            resume_object.email = entities["email"]
+
+        if entities.get("phone"):
+            resume_object.phone = entities["phone"]
+
+        if entities.get("location"):
+            resume_object.location = entities["location"]
         
         # -------------------------
         # 7. Feature extraction (Stage 3)
@@ -130,13 +151,12 @@ class ResumePipeline:
         # -------------------------
         # 8. ATS scoring
         # -------------------------
-        scores = score_resume(features, resume_object.raw_text)
+        scores = score_resume(features, cleaned_text)
         resume_object.scores = scores
 
         # -------------------------
         # 9. Quality analysis
         # -------------------------
-        resume_object.quality = {}
         resume_object.quality["typos"] = count_typos(cleaned_text)
         
         return resume_object
