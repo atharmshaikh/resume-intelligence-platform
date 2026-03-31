@@ -304,3 +304,24 @@ __marimo__/
 
 # Sample resumes (local testing only)
 sample_resumes/
+ml-service/ml-engine/sample_resumes/
+
+# -----------------------------
+# RESUME ML-ENGINE RULES
+# -----------------------------
+# Ignore ML models and trained artifacts explicitly mapped
+ml-service/ml-engine/ml_engine/ml/artifacts/
+**/artifacts/
+*.joblib
+*.pkl
+
+# Ignore generated datasets
+ml-service/ml-engine/ml_engine/ml/datasets/
+*.csv
+*.jsonl
+
+# Ignore engine debug/demo cache
+debug_extraction.py
+ml-service/ml-engine/debug_extraction.py
+ml-service/ml-engine/demo/uploads/
+ml-service/ml-engine/demo/.streamlit/
