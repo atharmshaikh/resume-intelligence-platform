@@ -19,7 +19,12 @@ class BaseParser(ABC):
         Validate file path and return normalized Path object.
         """
 
-        path = Path(file_path).expanduser().resolve()
+        path = Path(file_path).expanduser()
+
+        try:
+            path = path.resolve(strict=True)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found: {file_path}")
 
         if not path.exists():
             raise FileNotFoundError(f"File not found: {path}")
@@ -33,7 +38,7 @@ class BaseParser(ABC):
         return path   
      
     @abstractmethod
-    def parse(self, file_path: str) -> str:
+    def parse(self, file_path: str | Path) -> str:
         """
         Extract raw text from a file.
         Must be implemented by subclasses.

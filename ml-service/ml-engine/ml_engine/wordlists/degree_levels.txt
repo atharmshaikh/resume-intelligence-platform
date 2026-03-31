@@ -1,0 +1,10 @@
+bachelor
+b.tech
+b.e
+bsc
+bca
+m.tech
+msc
+mca
+phd
+diploma

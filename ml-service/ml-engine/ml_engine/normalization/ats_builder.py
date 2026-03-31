@@ -7,24 +7,83 @@ Designed to be robust across resume layouts.
 
 import re
 from ml_engine.schemas.resume_schema import ResumeSchema
-from ml_engine.config.ats_config import (
-    BULLET_CHARACTERS,
-    SKILL_SECTION_HEADERS,
-    SKILL_STOPWORDS,
-)
+from ml_engine.extraction.keyword_loader import load_wordlist
+
+# -------------------------------
+# Utility loaders
+# -------------------------------
+
+def load_normalization_map(filename: str) -> dict[str, str]:
+    """
+    Load normalization mappings like:
+    cpp:C++
+    js:JavaScript
+    """
+    mapping: dict[str, str] = {}
+
+    for line in load_wordlist(filename):
+
+        if ":" not in line:
+            continue
+
+        src, dst = line.split(":", 1)
+
+        mapping[src.strip().lower()] = dst.strip()
+
+    return mapping
+
+# -------------------------------
+# Wordlists
+# -------------------------------
+
+LOCATION_STOPWORDS = set(load_wordlist("locations.txt"))
+PROGRAMMING_LANGUAGES = set(load_wordlist("programming_languages.txt"))
+FRAMEWORKS = set(load_wordlist("frameworks.txt"))
+DATABASES = set(load_wordlist("databases.txt"))
+TOOLS = set(load_wordlist("tools.txt"))
+TECH_TERMS = set(load_wordlist("tech_terms.txt"))
+
+COMMON_HEADERS = set(load_wordlist("common_headers.txt"))
+RESUME_TERMS = set(load_wordlist("resume_terms.txt"))
+
+SKILL_SECTION_NAMES = set(load_wordlist("section_keywords.txt"))
+
+SKILL_NORMALIZATION = load_normalization_map("skill_normalization.txt")
+
+# Combined skill whitelist
+SKILL_WHITELIST = {
+    s.lower()
+    for s in (
+        PROGRAMMING_LANGUAGES
+        | FRAMEWORKS
+        | DATABASES
+        | TOOLS
+        | TECH_TERMS
+    )
+}
+
+# -------------------------------
+# Constants
+# -------------------------------
+
+BULLET_CHARACTERS = {
+    "•", "●", "▪", "◦", "►", "▸", "■", "□", "◆", "◇",
+    "-", "*"
+}
+
+
 MAX_SECTION_LINES = 800
 MAX_SKILLS = 200
 
+# -------------------------------
+# Text utilities
+# -------------------------------
+
 def _normalize_bullets(text: str) -> str:
-    """
-    Normalize bullet characters and separators.
-    """
 
     for bullet in BULLET_CHARACTERS:
         text = text.replace(bullet, "\n")
 
-    # Normalize common separators
-    text = text.replace("•", "\n")
     text = text.replace("|", "\n")
     text = text.replace(";", "\n")
 
@@ -46,8 +105,19 @@ def _clean_lines(text):
         if not line:
             continue
 
+        # remove URLs
+        if "http" in line.lower():
+            continue
+
+        if "github.com" in line.lower():
+            continue
+
+        if "linkedin.com" in line.lower():
+            continue
+
         if len(line) > 1000:
             continue
+
         lines.append(line)
 
         if len(lines) >= MAX_SECTION_LINES:
@@ -55,17 +125,19 @@ def _clean_lines(text):
 
     return lines
 
+# -------------------------------
+# Skill extraction
+# -------------------------------
+
 def _extract_skills(text: str):
-    """
-    Extract normalized skill tokens.
-    """
+
     # Convert list sections to text
     if isinstance(text, list):
         text = "\n".join(text)
 
     text = _normalize_bullets(text)
 
-    tokens = re.split(r"\n|,|\||/", text)
+    tokens = re.split(r"[,\n|/;&]", text)
 
     skills = []
     seen = set()
@@ -74,77 +146,67 @@ def _extract_skills(text: str):
 
         skill = token.strip()
 
+        if not skill:
+            continue
+
+        skill = skill.replace("(", "").replace(")", "")
+        skill = re.sub(r"[–—−]", "-", skill)
+        # replace dash only when used as separator
+        skill = re.sub(r"\s-\s", " ", skill)
+
+        skill_lower = skill.lower().strip()
+        
+        # Normalize first
+        skill_norm = SKILL_NORMALIZATION.get(skill_lower, skill)
+        skill_norm_lower = skill_norm.lower()
+
         # Ignore years/dates
         if re.search(r"\d{4}", skill):
             continue
 
-        # Ignore common location tokens
-        LOCATION_STOPWORDS = {"anand", "bharuch", "gujarat", "india"}
-
+        # ignore locations
         if skill.lower() in LOCATION_STOPWORDS:
             continue
+        
+        # ignore headers
+        if skill_lower in COMMON_HEADERS:
+            continue
 
-        # Normalize common skill variants
-        skill = skill.replace("My SQL", "MySQL")
-        skill = skill.replace("CPP", "C++")
-        skill = skill.replace("JS", "JavaScript")
+        if skill_lower in RESUME_TERMS:
+            continue
 
-        # Ignore pure numbers
+        # Remove degree words incorrectly captured as skills
+        if skill_lower in {"bachelor", "btech", "b.tech", "diploma", "degree"}:
+            continue
+
+        # ignore numbers
         if skill.isdigit():
             continue
 
-        # Ignore dates
-        if re.search(r"\d{4}", skill):
+        # ignore long sentences
+        if len(skill.split()) > 2:
             continue
 
-        # Ignore pure locations
-        if re.match(r"^[A-Z][a-z]+(?:\s[A-Z][a-z]+)*$", skill) and len(skill) > 10:
+        # whitelist validation
+        if skill_norm_lower not in SKILL_WHITELIST:
+            if not any(part in SKILL_WHITELIST for part in skill_norm_lower.split()):
+                continue
+
+        if skill_norm_lower in seen:
             continue
 
-        if not skill:
-            continue
+        skills.append(skill_norm)
 
-        skill_lower = skill.lower()
-
-        if skill_lower in SKILL_STOPWORDS:
-            continue
-
-        if skill_lower in SKILL_SECTION_HEADERS:
-            continue
-
-        HEADER_STOPWORDS = {"professional", "experience", "education", "projects"}
-
-        if skill_lower in HEADER_STOPWORDS: 
-            continue
-
-        if len(skill) < 2:
-            continue
-
-        # Skip long sentences (likely descriptions)
-        if len(skill.split()) > 4:
-            continue
-
-        if skill_lower in seen:
-            continue
-
-        # Normalize common skill tokens
-        NORMALIZATION = {
-            "cpp": "C++",
-            "c++": "C++",
-            "mysql": "MySQL",
-            "html": "HTML",
-            "css": "CSS",
-        }
-
-        skill_norm = NORMALIZATION.get(skill_lower, skill)
-
-        skills.append(skill_norm)   
-        seen.add(skill_lower)
+        seen.add(skill_norm_lower)
 
         if len(skills) >= MAX_SKILLS:
             break
 
     return skills
+
+# -------------------------------
+# Project extraction
+# -------------------------------
 
 def _extract_projects(text: str):
     """
@@ -164,11 +226,15 @@ def _extract_projects(text: str):
         if len(line) < 3:
             continue
 
+        # skip section headers
+        if line.strip().lower() in COMMON_HEADERS:
+            continue
+
         if line.endswith(":") or line.startswith("-"):
             continue
 
         # Treat short lines as project titles
-        if len(line) < 60 and not line.startswith("-"):
+        if 5 < len(line) < 60 and line.count(" ") <= 6 and not line.startswith("-"):
             if buffer:
                 projects.append(" ".join(buffer))
                 buffer = []
@@ -180,6 +246,10 @@ def _extract_projects(text: str):
         projects.append(" ".join(buffer))
 
     return projects
+
+# -------------------------------
+# ATS structure builder
+# -------------------------------
 
 def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
     """
@@ -202,11 +272,13 @@ def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
 
     if "skills" in sections:
         resume.skills = _extract_skills(sections["skills"])
-    for alt in ("technical_skills", "core_skills"):
 
-        if not resume.skills and alt in sections:
-            resume.skills = _extract_skills(sections[alt])
-    
+    # If no skills found, look for alternate section names (only then)
+    if not resume.skills:
+        for section_name, content in sections.items():
+            if section_name.lower() in SKILL_SECTION_NAMES:
+                resume.skills = _extract_skills(content)
+                break
     # -----------------------
     # EDUCATION
     # -----------------------
@@ -230,6 +302,23 @@ def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
     if "projects" in sections:
         resume.projects = _extract_projects(sections["projects"])
     
+    # Infer skills from project descriptions if skills section is weak
+    if resume.projects:
+        project_text = " ".join(resume.projects).lower()
+
+        existing_skills = {s.lower() for s in resume.skills}
+
+        for skill in SKILL_WHITELIST:
+
+            if skill in existing_skills:
+                continue
+
+            if re.search(rf"(?<![a-z0-9]){re.escape(skill)}(?![a-z0-9])", project_text):
+
+                resume.skills.append(skill)
+
+                existing_skills.add(skill)
+
     # -----------------------
     # ACHIEVEMENTS
     # -----------------------
@@ -242,6 +331,13 @@ def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
     # -----------------------
 
     if "languages" in sections:
-        resume.languages = _clean_lines(sections["languages"])
+        lang_lines = _clean_lines(sections["languages"])
+
+        languages = []
+        for line in lang_lines:
+            parts = re.split(r"[,\s/]+", line)
+            languages.extend(p for p in parts if p)
+
+        resume.languages = languages
 
     return resume

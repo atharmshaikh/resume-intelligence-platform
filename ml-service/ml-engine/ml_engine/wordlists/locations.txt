@@ -14,3 +14,7 @@ khambhat
 limdi
 rajkot
 gandhinagar
+bharuch
+anand
+gujarat
+khambhat

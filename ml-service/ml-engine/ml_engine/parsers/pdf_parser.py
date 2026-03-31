@@ -6,16 +6,36 @@ from pdfminer.high_level import extract_text
 from .base_parser import BaseParser
 from pathlib import Path
 from pdfminer.pdfparser import PDFSyntaxError
+from pdfminer.layout import LAParams
 
 class PDFParser(BaseParser):
 
     def parse(self, file_path: str) -> str:
         try:
             path = self._validate_file(file_path)
-            text = extract_text(str(path))
+            
+            laparams = LAParams(
+            line_margin=0.4,
+            word_margin=0.1,
+            char_margin=2.0,
+            )
 
-            if not text or len(text.strip()) < 30:
+            text = extract_text(
+                str(path),
+                laparams=laparams
+            )
+
+            # Safety guard: prevent extremely large PDF text
+            if text and len(text) > 2_000_000:
+                raise RuntimeError("PDF text exceeds safe processing size")
+
+            if not text or len(text.strip().split()) < 10:
                 raise ValueError("PDF parsing returned empty content")
+
+            text = text.replace("\r", "\n")
+
+            # collapse excessive blank lines
+            text = "\n".join(line for line in text.splitlines())
 
             return text
 

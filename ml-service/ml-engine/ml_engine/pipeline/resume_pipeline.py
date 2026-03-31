@@ -83,7 +83,12 @@ class ResumePipeline:
         Execute resume processing pipeline.
         """
 
-        file_path = Path(file_path).expanduser().resolve(strict=True)
+        file_path = Path(file_path).expanduser()
+
+        try:
+            file_path = file_path.resolve(strict=True)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"Resume file not found: {file_path}")
 
         # -------------------------
         # 1. Validate file
@@ -95,9 +100,9 @@ class ResumePipeline:
         # -------------------------
         parser = self._select_parser(file_path)
 
-        raw_text = parser.parse(str(file_path))
+        raw_text = parser.parse(file_path)
 
-        if not raw_text or len(raw_text.strip()) < 50:
+        if not raw_text or len(raw_text.split()) < 15:
             raise ValueError(
                 f"Parser returned insufficient text for resume: {file_path.name}"
             )
@@ -108,8 +113,10 @@ class ResumePipeline:
         cleaned_text = clean_text(raw_text)
 
         # Prevent excessive processing on very large resumes
-        if len(cleaned_text) > 200000:
-            cleaned_text = cleaned_text[:200000]
+        MAX_TEXT_LENGTH = 200000
+
+        if len(cleaned_text) > MAX_TEXT_LENGTH:
+            cleaned_text = cleaned_text[:MAX_TEXT_LENGTH]
 
         # -------------------------
         # 4. Detect sections
@@ -145,18 +152,33 @@ class ResumePipeline:
         # -------------------------
         # 7. Feature extraction (Stage 3)
         # -------------------------
-        features = extract_features(resume_object)
+        try:
+            features = extract_features(resume_object)
+        except Exception as exc:
+            raise RuntimeError(
+                f"Feature extraction failed for {file_path.name}"
+            ) from exc
+
         resume_object.features = features
-        
+
         # -------------------------
         # 8. ATS scoring
         # -------------------------
-        scores = score_resume(features, cleaned_text)
+        try:
+            scores = score_resume(features, cleaned_text)
+        except Exception as exc:
+            raise RuntimeError(
+                f"ATS scoring failed for {file_path.name}"
+            ) from exc
+
         resume_object.scores = scores
 
         # -------------------------
         # 9. Quality analysis
         # -------------------------
+        if not hasattr(resume_object, "quality") or resume_object.quality is None:
+            resume_object.quality = {}
+
         resume_object.quality["typos"] = count_typos(cleaned_text)
         
         return resume_object

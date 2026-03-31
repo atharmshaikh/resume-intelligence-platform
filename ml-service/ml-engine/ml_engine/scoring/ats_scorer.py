@@ -6,7 +6,10 @@ Produces interpretable resume quality scores.
 from ml_engine.quality.typo_checker import typo_score
 
 def _safe(features: dict, key: str, default=0):
-    return features.get(key, default)
+    v = features.get(key, default)
+    if v is None:
+        return default
+    return v
 
 def score_resume(features: dict, raw_text: str) -> dict:
 
@@ -39,7 +42,7 @@ def score_resume(features: dict, raw_text: str) -> dict:
     # Content score
     # -------------------------
 
-    skill_score = min(_safe(features, "skills_count") / 10, 1)
+    skill_score = min(_safe(features, "skills_count") / 15, 1)
 
     project_score = _safe(features, "has_projects")
 
@@ -54,13 +57,15 @@ def score_resume(features: dict, raw_text: str) -> dict:
     word_count = _safe(features, "resume_word_count")
 
     if word_count < 200:
-        length_score = 50
-    elif word_count < 400:
-        length_score = 80
+        length_score = 40
+    elif word_count < 350:
+        length_score = 75
     elif word_count < 900:
         length_score = 100
+    elif word_count < 1400:
+        length_score = 85
     else:
-        length_score = 70
+        length_score = 60
 
     # -------------------------
     # Typo score

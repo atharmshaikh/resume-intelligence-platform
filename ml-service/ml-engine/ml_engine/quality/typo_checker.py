@@ -13,6 +13,12 @@ ACADEMIC_TERMS = load_wordlist("academic_terms.txt")
 COMMON_DOMAINS = load_wordlist("domains.txt")
 LOCATION_WHITELIST = load_wordlist("locations.txt")
 INSTITUTE_WHITELIST = load_wordlist("institutes.txt")
+RESUME_ENTITIES = load_wordlist("resume_entities.txt")
+SECURITY_TERMS = load_wordlist("security_terms.txt")
+OCR_TERMS = load_wordlist("ocr_terms.txt")
+INDIAN_EDU_TERMS = load_wordlist("common_indian_terms.txt")
+NAME_WHITELIST = load_wordlist("names_whitelist.txt")
+COMMON_WORDS = load_wordlist("common_words.txt")
 
 WHITELIST = (
     TECH_WHITELIST
@@ -21,6 +27,12 @@ WHITELIST = (
     | COMMON_DOMAINS
     | LOCATION_WHITELIST
     | INSTITUTE_WHITELIST
+    | RESUME_ENTITIES
+    | SECURITY_TERMS
+    | OCR_TERMS
+    | INDIAN_EDU_TERMS
+    | NAME_WHITELIST
+    | COMMON_WORDS
 )
 
 EMAIL_PATTERN = re.compile(r"\S+@\S+")
@@ -37,6 +49,28 @@ def _get_spellchecker():
         _spell = SpellChecker(distance=1)
     return _spell
 
+def _is_probable_merged_word(word: str) -> bool:
+    """
+    Detect merged OCR tokens such as:
+    'vehicleregistration' -> vehicle + registration
+    """
+
+    length = len(word)
+
+    if length < 12:
+        return False
+
+    # try splitting word into two valid words
+    for i in range(2, length - 2):
+
+        left = word[:i]
+        right = word[i:]
+
+        if left in COMMON_WORDS and right in COMMON_WORDS:
+            return True
+
+    return False
+
 def count_typos(text: str):
 
     text = text[:MAX_TEXT_LENGTH]
@@ -44,12 +78,14 @@ def count_typos(text: str):
     text = EMAIL_PATTERN.sub(" ", text)
     text = URL_PATTERN.sub(" ", text)
 
-    words = re.findall(r"\b[a-zA-Z]{3,}\b", text)
-    words = [w.lower() for w in words]  
-    
+    WORD_PATTERN = re.compile(r"\b[a-zA-Z]{3,}\b")
+    words = WORD_PATTERN.findall(text)
+
     filtered_words = []
 
     for word in words:
+
+        word = word.lower()
 
         if word in WHITELIST:
             continue
@@ -57,15 +93,21 @@ def count_typos(text: str):
         if word.isupper():
             continue
 
-        if len(word) < 3:
+        if len(word) <= 4:
             continue
 
         # Skip proper nouns (likely names)
         if word[0].isupper():
             continue
+
         # Skip merged technical tokens (OCR artifacts)
         if len(word) > 20:
             continue
+
+        # Skip OCR merged tokens
+        if _is_probable_merged_word(word):  
+            continue
+
         # Skip typical institute tokens
         if word.endswith("university") or word.endswith("institute"):
             continue
@@ -74,7 +116,7 @@ def count_typos(text: str):
 
     spell = _get_spellchecker()
     filtered_words = filtered_words[:MAX_SPELLCHECK_WORDS]
-    misspelled = set(spell.unknown(set(filtered_words))) 
+    misspelled = set(spell.unknown(filtered_words[:MAX_SPELLCHECK_WORDS]))
 
     typo_count = len(misspelled)
     total_words = len(filtered_words)

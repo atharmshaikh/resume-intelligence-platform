@@ -16,9 +16,6 @@ class DocxParser(BaseParser):
             
             text_lines = []
 
-            if len(text_lines) > 5000:
-                raise RuntimeError("DOCX content too large to safely process")
-
             for paragraph in doc.paragraphs:
                 content = paragraph.text.strip()
                 if content:
@@ -33,12 +30,19 @@ class DocxParser(BaseParser):
                     )
                     if row_text:
                         text_lines.append(row_text)
+            # safety guard for extremely large documents
+            if len(text_lines) > 5000:
+                raise RuntimeError("DOCX content too large to safely process")
 
             if len(text_lines) < 3:
                 raise ValueError("DOCX parsing returned empty content")
 
             text = "\n".join(text_lines)
             text = text.replace("\r", "\n")
+
+            # normalize blank lines
+            text = "\n".join(line for line in text.splitlines())
+
             return text
 
         except PackageNotFoundError as exc:

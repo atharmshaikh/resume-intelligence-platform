@@ -10,7 +10,30 @@ docker
 kubernetes
 aws
 azure
-postgresql
-mongodb
-spark
-kafka
+gcp
+react
+nodejs
+django
+fastapi
+spring boot
+flutter
+computer vision
+nlp
+natural language processing
+data science
+devops
+ci/cd
+microservices
+rest api
+graphql
+system design
+competitive programming
+open source
+blockchain
+cybersecurity
+penetration testing
+ethical hacking
+cloud computing
+artificial intelligence
+generative ai
+llm

@@ -4,14 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ml-engine"
-version = "0.2.0"
+version = "0.4.0"
 description = "Resume ATS ML Engine"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 
 authors = [
-    {name = "Athar Shaikh"}
+    {name = "Athar Shaikh"},
+    {name = "Sahil Chunara"}
 ]
 
 keywords = [
@@ -32,7 +33,9 @@ dependencies = [
     "pdfminer.six>=20221105",
     "python-docx>=1.1.0",
     "pyspellchecker>=0.7.2",
-    "pydantic>=2.0"
+    "pydantic>=2.0",
+    "pandas",
+    "streamlit"
 ]
 
 [tool.setuptools.packages.find]
@@ -46,3 +49,11 @@ ml_engine = [
 
 [tool.setuptools]
 include-package-data = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+log_cli = true
+log_cli_level = "WARNING"

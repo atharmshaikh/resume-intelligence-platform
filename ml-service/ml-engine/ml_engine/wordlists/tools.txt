@@ -1,0 +1,34 @@
+git
+github
+gitlab
+docker
+kubernetes
+linux
+aws
+azure
+gcp
+postman
+jira
+figma
+vscode
+intellij
+eclipse
+android studio
+xcode
+jupyter
+colab
+heroku
+netlify
+vercel
+nginx
+apache
+ci/cd
+jenkins
+terraform
+ansible
+tableau
+powerbi
+excel
+ms office
+bash
+vim

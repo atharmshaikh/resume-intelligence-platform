@@ -20,6 +20,12 @@ MULTISPACE_PATTERN = re.compile(r"[ \t]+")
 # Collapse multi blank lines
 MULTILINE_PATTERN = re.compile(r"\n\s*\n")
 
+ENHANCV_PATTERN = re.compile(
+    r"(powered by|enhancv\.com)",
+    re.IGNORECASE
+)
+
+
 def normalize_spaced_headers(text: str) -> str:
     """
     Convert headers like 'T E C H S K I L L S'
@@ -60,13 +66,15 @@ def remove_pdf_artifacts(text: str) -> str:
 
 def merge_broken_words(text: str) -> str:
     """
-    Merge words split by line breaks.
+    Merge words split by line breaks ONLY if they are hyphenated.
     Example:
-    Java
-    Script -> JavaScript
+    Inter-
+    active -> Interactive
     """
+    # merge letter-\nletter pairs
+    text = re.sub(r"([A-Za-z])-\n([A-Za-z])", r"\1\2", text)
 
-    return re.sub(r"([a-z])\n([a-z])", r"\1\2", text)
+    return text
 
 def normalize_ocr_spacing(text: str) -> str:
     """
@@ -76,7 +84,11 @@ def normalize_ocr_spacing(text: str) -> str:
     'P RO JE CT S' -> 'PROJECTS'
     """
 
-    rtext = re.sub(r"\b(?:[A-Z]\s){2,}[A-Z]\b", lambda m: m.group(0).replace(" ", ""), text)
+    text = re.sub(
+        r"\b(?:[A-Za-z]\s){2,}[A-Za-z]\b", 
+        lambda m: m.group(0).replace(" ", ""), 
+        text
+    )
 
     # Normalize common skill spacing
     text = re.sub(r"\bMy\s+SQL\b", "MySQL", text, flags=re.I)
@@ -96,37 +108,60 @@ def clean_text(text: str) -> str:
     # Normalize line endings
     text = text.replace("\r", "\n")
 
+    # Merge broken words early before other transformations
+    text = merge_broken_words(text)
+
     # Remove PDF artifacts
     text = remove_pdf_artifacts(text)
 
     # Normalize bullet symbols
     text = normalize_bullets(text)
 
+    # Normalize spaced headers like "S K I L L S"
+    text = normalize_spaced_headers(text)
+
     # Ensure emails and URLs are separated from surrounding text
     text = re.sub(r"\s*@\s*", "@", text)
     text = re.sub(r"(\.(?:com|in|org|net))([A-Za-z])", r"\1 \2", text)
 
     # Normalize spaced headers
-    text = normalize_spaced_headers(text)
-    text = normalize_ocr_spacing(text)
-
-    # Separate punctuation from words to prevent merging
-    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)  
-
-    # Ensure section headers start on new lines
+    # Fix split section headers like "PROFESSIONAL\nEXPERIENCE"
     text = re.sub(
-        r"(EDUCATION|PROJECTS|SKILLS|CERTIFICATIONS|EXPERIENCE|ACTIVITIES|PROFILE|SUMMARY|LANGUAGES|INTERESTS|OBJECTIVE)",
-        r"\n\1",
+        r"\b(professional|work)\s*\n\s*(experience)\b",
+        r"\1 \2",
         text,
         flags=re.IGNORECASE
     )
 
+    # Apply OCR fixes only when spacing artifacts exist
+    if re.search(r"\b[A-Za-z]\s[A-Za-z]\s[A-Za-z]", text):
+        text = normalize_ocr_spacing(text)
+
+    # split merged capital tokens like CPPJavaPython
+    text = re.sub(r"([a-z])([A-Z])", r"\1 \2", text)
+    text = re.sub(r"([A-Z]{2,})([A-Z][a-z])", r"\1 \2", text)
+
+    # Ensure common resume headers that appear alone on a line
+    # get proper newline separation. Only matches when the header
+    # is the ENTIRE content of a line (no surrounding text).
+    # This does NOT split mid-sentence words like "my skills".
+    _HEADER_ISOLATION = re.compile(
+        r"(?m)^[ \t]*(EDUCATION|PROJECTS|SKILLS|EXPERIENCE|PROFILE|SUMMARY"
+        r"|LANGUAGES|ACHIEVEMENTS|OBJECTIVE|CERTIFICATIONS|DECLARATION)[ \t]*$",
+        re.IGNORECASE
+    )
+    text = _HEADER_ISOLATION.sub(lambda m: "\n" + m.group(0).strip() + "\n", text)
+
+
     # Split merged lowercase words (common OCR issue)
-    text = re.sub(r"([a-z])([A-Z][a-z])", r"\1 \2", text)
+    text = re.sub(r"\b([a-z]{3,})([A-Z][a-z]+)\b", r"\1 \2", text)
 
     # Normalize whitespace
     text = MULTISPACE_PATTERN.sub(" ", text)
     text = MULTILINE_PATTERN.sub("\n", text) 
+
+    # Remove Enhancv artifacts
+    text = ENHANCV_PATTERN.sub("", text)
 
     # Separate common web tokens
     text = re.sub(r"(github\.com)", r" \1 ", text)
@@ -134,7 +169,5 @@ def clean_text(text: str) -> str:
 
     # Remove resume builder watermarks
     text = re.sub(r"powered by .*", "", text, flags=re.I)
-
-    text = merge_broken_words(text)
 
     return text.strip()

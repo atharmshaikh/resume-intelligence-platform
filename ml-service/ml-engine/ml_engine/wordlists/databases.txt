@@ -1,0 +1,15 @@
+mysql
+postgresql
+mongodb
+sqlite
+redis
+firebase
+oracle
+sql server
+mariadb
+cassandra
+dynamodb
+elasticsearch
+supabase
+cockroachdb
+neo4j

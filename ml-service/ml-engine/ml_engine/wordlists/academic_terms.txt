@@ -1,28 +1,36 @@
-cgpa
-gpa
-btech
 bachelor
-masters
-phd
-mtech
+b.tech
+b.e
+b.sc
 bsc
-msc
 bca
+b.c.a
+b.sc it
+bsc it
+master
+m.tech
+m.e
+m.sc
+msc
 mca
-
-cbse
-icse
-gseb
-
-university
-college
-institute
-department
-faculty
-
-semester
-coursework
-thesis
-research
-project
-publication
+m.c.a
+m.sc it
+msc it
+mba
+phd
+diploma
+degree
+engineering
+technology
+science
+information technology
+computer science
+computer engineering
+software engineering
+electronics
+electrical
+mechanical
+civil
+b.com
+m.com
+pgdca

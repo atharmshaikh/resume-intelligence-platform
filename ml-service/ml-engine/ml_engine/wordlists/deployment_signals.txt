@@ -1,0 +1,15 @@
+deployed
+live at
+hosted on
+available at
+production
+github.com
+gitlab.com
+vercel.app
+netlify.app
+heroku
+play store
+app store
+pypi
+npm
+docker hub

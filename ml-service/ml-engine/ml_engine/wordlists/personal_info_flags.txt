@@ -1,0 +1,20 @@
+date of birth
+dob
+gender
+religion
+marital status
+married
+unmarried
+single
+nationality
+caste
+passport
+father name
+mother name
+permanent address
+aadhaar
+pan card
+voter id
+blood group
+height
+weight
