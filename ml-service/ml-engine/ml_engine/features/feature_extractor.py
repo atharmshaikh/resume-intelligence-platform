@@ -43,8 +43,8 @@ import re
 from functools import lru_cache
 from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
-from ml_engine.schemas.resume_schema import ResumeSchema      # type: ignore[import]
-from ml_engine.extraction.keyword_loader import load_wordlist  # type: ignore[import]
+from ml_engine.schemas import ResumeSchema      # type: ignore[import]
+from ml_engine.extraction import load_wordlist  # type: ignore[import]
 
 # ---------------------------------------------------------------------------
 # Module-level logger

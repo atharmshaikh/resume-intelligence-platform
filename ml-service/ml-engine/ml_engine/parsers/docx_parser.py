@@ -2,10 +2,15 @@
 DOCX parser using python-docx.
 """
 
-from docx import Document
-from .base_parser import BaseParser
+import logging
 from pathlib import Path
+from docx import Document
 from docx.opc.exceptions import PackageNotFoundError
+
+from .base_parser import BaseParser
+from ml_engine.utils import ResumeParserError
+
+logger = logging.getLogger(__name__)
 
 class DocxParser(BaseParser):
 
@@ -32,10 +37,12 @@ class DocxParser(BaseParser):
                         text_lines.append(row_text)
             # safety guard for extremely large documents
             if len(text_lines) > 5000:
-                raise RuntimeError("DOCX content too large to safely process")
+                logger.warning(f"DOCX content too large to safely process: {file_path}")
+                raise ResumeParserError("DOCX content too large to safely process")
 
             if len(text_lines) < 3:
-                raise ValueError("DOCX parsing returned empty content")
+                logger.warning(f"DOCX parsing returned sparse content: {file_path}")
+                raise ResumeParserError("DOCX parsing returned empty content")
 
             text = "\n".join(text_lines)
             text = text.replace("\r", "\n")
@@ -46,11 +53,14 @@ class DocxParser(BaseParser):
             return text
 
         except PackageNotFoundError as exc:
-            raise RuntimeError(
-                f"Invalid or corrupted DOCX file: {file_path}"
-        ) from exc
+            msg = f"Invalid or corrupted DOCX file: {file_path}"
+            logger.error(msg)
+            raise ResumeParserError(msg) from exc
+
+        except ResumeParserError:
+            raise
 
         except Exception as exc:
-            raise RuntimeError(
-                f"DOCX parsing failed for file: {file_path}"
-        ) from exc
+            msg = f"Unexpected DOCX parsing failure for file: {file_path}"
+            logger.exception(msg)
+            raise ResumeParserError(msg) from exc

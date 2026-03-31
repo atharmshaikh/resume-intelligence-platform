@@ -34,9 +34,8 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
-from ..dataset.synthetic_dataset import SyntheticDatasetGenerator
-from ..dataset.dataset_loader import DATASET_LOADER
-from ..models.random_forest_model import RandomForestModel, LABEL_NAMES
+from ..dataset import SyntheticDatasetGenerator, DATASET_LOADER
+from ..models import RandomForestModel, LABEL_NAMES
 
 logger = logging.getLogger(__name__)
 

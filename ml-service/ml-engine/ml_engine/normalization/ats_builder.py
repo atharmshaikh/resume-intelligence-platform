@@ -5,9 +5,12 @@ Transforms extracted sections into structured ATS fields.
 Designed to be robust across resume layouts.
 """
 
+import logging
 import re
-from ml_engine.schemas.resume_schema import ResumeSchema
-from ml_engine.extraction.keyword_loader import load_wordlist
+from ml_engine.schemas import ResumeSchema
+from ml_engine.extraction import load_wordlist
+
+logger = logging.getLogger(__name__)
 
 # -------------------------------
 # Utility loaders
@@ -256,6 +259,10 @@ def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
     Convert detected sections into ATS structured resume.
     """
 
+    if not isinstance(sections, dict):
+        logger.warning(f"Invalid sections type provided: {type(sections)}. Resetting to empty dict.")
+        sections = {}
+
     resume = ResumeSchema()
 
     resume.raw_text = raw_text
@@ -339,5 +346,29 @@ def build_ats_structure(raw_text: str, sections: dict) -> ResumeSchema:
             languages.extend(p for p in parts if p)
 
         resume.languages = languages
+
+    # -----------------------
+    # UNKNOWN SECTION (AI CLASSIFIER FALLBACK)
+    # -----------------------
+    for sec_name, content in list(sections.items()):
+        if sec_name.startswith("unknown_"):
+            content_str = " ".join(content).lower()
+            
+            # Heuristic 1: Experience (dates + length)
+            if bool(re.search(r"20\d{2}|19\d{2}", content_str)) and len(content) > 2:
+                if not resume.experience:
+                    resume.experience = _clean_lines(content)
+                continue
+                
+            # Heuristic 2: Skills (dense tech keywords)
+            tech_hits = sum(1 for skill in SKILL_WHITELIST if skill in content_str)
+            if tech_hits >= 3 and not resume.skills:
+                resume.skills = _extract_skills(content)
+                continue
+                
+            # Heuristic 3: Projects
+            if ("project" in sec_name or "system" in content_str) and not resume.projects:
+                resume.projects = _extract_projects(content)
+                continue
 
     return resume

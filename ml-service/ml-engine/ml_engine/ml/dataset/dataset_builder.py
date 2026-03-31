@@ -6,7 +6,7 @@ Responsible for building dataset rows from raw feature dictionaries.
 
 from typing import Dict, List
 
-from ..feature_store.feature_vector import FEATURE_VECTOR_BUILDER
+from ..feature_store import FEATURE_VECTOR_BUILDER
 
 
 class DatasetBuilderError(Exception):

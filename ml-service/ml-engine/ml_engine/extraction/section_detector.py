@@ -19,7 +19,12 @@ extra spaces.  No regex backtracking on the hot path.
 
 import re
 from typing import Dict, List, Optional
-from ml_engine.config.ats_config import SECTION_KEYWORDS  # type: ignore[import]
+import logging
+
+from ml_engine.config import SECTION_KEYWORDS  # type: ignore[import]
+from ml_engine.utils.exceptions import ExtractionError
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -146,6 +151,14 @@ def detect_sections(text: str) -> Dict[str, List[str]]:
     Dict[str, List[str]]
         Mapping of canonical section name → list of non-empty content lines.
     """
+    try:
+        return _detect_sections_impl(text)
+    except Exception as exc:
+        msg = "Critical failure during section detection."
+        logger.exception(msg)
+        raise ExtractionError(msg) from exc
+
+def _detect_sections_impl(text: str) -> Dict[str, List[str]]:
     if not text or not isinstance(text, str):
         return {}
 
@@ -207,6 +220,16 @@ def detect_sections(text: str) -> Dict[str, List[str]]:
 
     for line in merged:
         key = _match_header(line)
+
+        # AI Heuristic: Unknown Section Detection
+        if key is None:
+            _clean = line.strip()
+            if 3 < len(_clean) <= 40 and len(_clean.split()) <= 4:
+                if _clean[-1] not in {'.', ',', ';', '-', '(', ')'}:
+                    if _clean.isupper() or (_clean.istitle() and len(_clean.split()) <= 2):
+                        # Avoid classifying generic single words as sections easily
+                        if len(_clean.split()) > 1 or len(_clean) >= 5:
+                            key = f"unknown_{_clean.lower().replace(' ', '_')}"
 
         if key is not None:
             # Avoid resetting the same section twice in a row

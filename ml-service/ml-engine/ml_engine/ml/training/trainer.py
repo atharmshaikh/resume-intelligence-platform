@@ -6,8 +6,8 @@ Handles model training and artifact saving.
 
 from pathlib import Path
 
-from ..dataset.dataset_loader import DATASET_LOADER
-from ..models.model_registry import ModelRegistry
+from ..dataset import DATASET_LOADER
+from ..models import ModelRegistry
 
 
 class TrainerError(Exception):

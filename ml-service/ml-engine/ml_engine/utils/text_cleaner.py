@@ -4,6 +4,11 @@ Keeps text normalization consistent across the engine.
 """
 
 import re
+import logging
+import unicodedata
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Normalize weird unicode bullets
 BULLET_PATTERN = re.compile(r"[•●▪◦►▸■□◆◇]")
@@ -98,6 +103,13 @@ def normalize_ocr_spacing(text: str) -> str:
     return text
 
 def clean_text(text: str) -> str:
+    try:
+        return _clean_text_impl(text)
+    except Exception as exc:
+        logger.exception("Text cleaning failed unexpectedly. Returning raw string.")
+        return text if isinstance(text, str) else ""
+
+def _clean_text_impl(text: str) -> str:
     """
     Normalize whitespace and remove redundant characters.
     """
@@ -116,6 +128,11 @@ def clean_text(text: str) -> str:
 
     # Normalize bullet symbols
     text = normalize_bullets(text)
+
+    # -------------------------------------------------------------
+    # Unicode & Font Immunity: Flatten crazy ligatures and symbols
+    # -------------------------------------------------------------
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("utf-8")
 
     # Normalize spaced headers like "S K I L L S"
     text = normalize_spaced_headers(text)

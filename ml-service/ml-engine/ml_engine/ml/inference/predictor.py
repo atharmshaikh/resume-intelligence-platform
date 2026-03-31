@@ -14,9 +14,8 @@ from typing import Any, Dict
 
 import pandas as pd
 
-from ..feature_store.feature_schema import FEATURE_SCHEMA
-from ..feature_store.feature_vector import FEATURE_VECTOR_BUILDER
-from ..models.random_forest_model import RandomForestModel
+from ..feature_store import FEATURE_SCHEMA, FEATURE_VECTOR_BUILDER
+from ..models import RandomForestModel
 
 logger = logging.getLogger(__name__)
 

@@ -4,8 +4,13 @@ Counts spelling errors in resume text.
 """
 
 import re
+import logging
+from typing import Dict, Any
+
 from spellchecker import SpellChecker
-from ml_engine.extraction.keyword_loader import load_wordlist
+from ml_engine.extraction import load_wordlist
+
+logger = logging.getLogger(__name__)
 
 TECH_WHITELIST = load_wordlist("tech_terms.txt")
 RESUME_WORDS = load_wordlist("resume_terms.txt")
@@ -71,7 +76,19 @@ def _is_probable_merged_word(word: str) -> bool:
 
     return False
 
-def count_typos(text: str):
+def count_typos(text: str) -> Dict[str, Any]:
+    try:
+        return _count_typos_impl(text)
+    except Exception as exc:
+        logger.warning(f"Typo checker memory/library failure: {exc}. Gracefully returning default metrics.")
+        return {
+            "typo_count": 0,
+            "total_words": 0,
+            "typo_ratio": 0.0,
+            "typo_words": []
+        }
+
+def _count_typos_impl(text: str) -> Dict[str, Any]:
 
     text = text[:MAX_TEXT_LENGTH]
 
@@ -130,7 +147,7 @@ def count_typos(text: str):
 }
 
 
-def typo_score(text: str):
+def typo_score(text: str) -> float:
 
     result = count_typos(text)
 

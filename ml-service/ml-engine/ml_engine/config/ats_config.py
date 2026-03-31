@@ -20,7 +20,9 @@ Designed to handle:
 # Each entry maps to a canonical section key used by the pipeline.
 # ---------------------------------------------------------------------------
 
-SECTION_KEYWORDS: dict = {
+from typing import Dict, List, Set
+
+SECTION_KEYWORDS: Dict[str, List[str]] = {
 
     "career_objective": [
         "career objective",
@@ -159,7 +161,7 @@ SECTION_KEYWORDS: dict = {
 # SKILL CATEGORY HEADERS
 # ---------------------------------------------------------------------------
 
-SKILL_SECTION_HEADERS: set = {
+SKILL_SECTION_HEADERS: Set[str] = {
     "technical skills",
     "soft skills",
     "languages",
@@ -169,7 +171,7 @@ SKILL_SECTION_HEADERS: set = {
 # SKILL TAXONOMY for CS / BCA / MCA resumes
 # ---------------------------------------------------------------------------
 
-TECH_SKILLS: set = {
+TECH_SKILLS: Set[str] = {
     "python", "java", "c", "c++", "c#", "javascript",
     "typescript", "php", "dart", "kotlin", "swift",
     "sql", "mysql", "postgresql", "mongodb", "sqlite",
@@ -180,7 +182,7 @@ TECH_SKILLS: set = {
     "data science", "excel", "powerpoint",
 }
 
-SOFT_SKILLS: set = {
+SOFT_SKILLS: Set[str] = {
     "communication", "team coordination", "time management",
     "leadership", "problem solving", "adaptability",
     "critical thinking", "presentation", "teamwork",
@@ -190,7 +192,7 @@ SOFT_SKILLS: set = {
 # STOP WORDS for skill extraction
 # ---------------------------------------------------------------------------
 
-SKILL_STOPWORDS: set = {
+SKILL_STOPWORDS: Set[str] = {
     "technical skills", "soft skills", "skills", "technologies",
     "areas of expertise", "tools and technologies",
 }
@@ -199,4 +201,4 @@ SKILL_STOPWORDS: set = {
 # TEXT NORMALIZATION
 # ---------------------------------------------------------------------------
 
-BULLET_CHARACTERS: list = ["•", "-", "*", "▪", "◦", "▸", "►"]
+BULLET_CHARACTERS: List[str] = ["•", "-", "*", "▪", "◦", "▸", "►"]

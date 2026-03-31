@@ -13,7 +13,12 @@ All extractors are designed to be robust against noisy PDF text.
 import re
 from itertools import islice
 from typing import Dict, List, Optional
+import logging
+
 from .keyword_loader import load_wordlist  # type: ignore[import]
+from ml_engine.utils.exceptions import ExtractionError
+
+logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Compiled patterns
@@ -62,7 +67,8 @@ _ROLE_WORDS: frozenset = frozenset({
 def _safe_load(filename: str) -> List[str]:
     try:
         return load_wordlist(filename)
-    except Exception:
+    except Exception as exc:
+        logger.warning(f"Failed to load wordlist '{filename}' in entity extractor: {exc}")
         return []
 
 COMMON_HEADERS   : List[str] = _safe_load("common_headers.txt")
@@ -188,9 +194,14 @@ def extract_location(text: str) -> Optional[str]:
 
 def extract_entities(text: str) -> Dict[str, Optional[str]]:
     """Extract name, email, phone, and location from raw resume text."""
-    return {
-        "name":     extract_name(text),
-        "email":    extract_email(text),
-        "phone":    extract_phone(text),
-        "location": extract_location(text),
-    }
+    try:
+        return {
+            "name":     extract_name(text),
+            "email":    extract_email(text),
+            "phone":    extract_phone(text),
+            "location": extract_location(text),
+        }
+    except Exception as exc:
+        msg = "Fatal error extracting entities from text block."
+        logger.exception(msg)
+        raise ExtractionError(msg) from exc

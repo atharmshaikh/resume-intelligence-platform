@@ -3,7 +3,11 @@ Rule-based ATS scoring system.
 
 Produces interpretable resume quality scores.
 """
-from ml_engine.quality.typo_checker import typo_score
+import logging
+from typing import Dict, Any
+from ml_engine.quality import typo_score
+
+logger = logging.getLogger(__name__)
 
 def _safe(features: dict, key: str, default=0):
     v = features.get(key, default)
@@ -11,7 +15,21 @@ def _safe(features: dict, key: str, default=0):
         return default
     return v
 
-def score_resume(features: dict, raw_text: str) -> dict:
+def score_resume(features: dict, raw_text: str) -> Dict[str, float]:
+    try:
+        return _score_resume_impl(features, raw_text)
+    except Exception as exc:
+        logger.exception("ATS Scoring crashed. Returning baseline 0.")
+        return {
+            "ats_score": 0.0,
+            "contact_score": 0.0,
+            "structure_score": 0.0,
+            "content_score": 0.0,
+            "length_score": 0.0,
+            "typo_score": 0.0,
+        }
+
+def _score_resume_impl(features: dict, raw_text: str) -> Dict[str, float]:
 
     scores = {}
 
