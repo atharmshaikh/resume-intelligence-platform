@@ -67,7 +67,7 @@ class FeatureSchema:
 
 
 # =============================================================================
-# FEATURE LIST  (165 features — matches feature_extractor.py G01–G11)
+# FEATURE LIST  (166 features — matches feature_extractor.py G01–G11)
 # =============================================================================
 
 FEATURE_LIST: List[str] = [

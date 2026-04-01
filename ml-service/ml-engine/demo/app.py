@@ -9,7 +9,7 @@ from pathlib import Path
 import streamlit as st
 
 from ml_engine.ml.inference.predictor import ResumePredictor
-from ml_engine.ml.feature_store.feature_schema import FEATURE_SCHEMA
+from ml_engine.ml.schemas.feature_schema import FEATURE_SCHEMA
 
 
 # --------------------------------------------------

@@ -93,9 +93,35 @@ class ResumePipeline:
 
         return parser
 
-    def parse(self, file_path: Union[str, Path], timeout_seconds: float = 30.0):
+    def to_optimized_dict(self, resume_obj) -> dict:
         """
-        Execute resume processing pipeline safely.
+        Convert full ResumeSchema to a lightweight, resource-optimized dictionary.
+        Excludes raw text and internal section mapping to save space.
+        """
+        return {
+            # 1. Identity (Essential for Backend)
+            "identity": {
+                "name": resume_obj.name,
+                "email": resume_obj.email,
+                "phone": resume_obj.phone,
+                "location": resume_obj.location,
+            },
+            # 2. Profile Highlights (Summarized fields)
+            "highlights": {
+                "skills": list(resume_obj.skills[:20]), # Top 20 skills
+                "education_summary": list(resume_obj.education[:3]),
+                "experience_summary": list(resume_obj.experience[:5]),
+                "project_summary": list(resume_obj.projects[:5]),
+            },
+            # 3. ML Features (The 166 vector and scores)
+            "features": dict(resume_obj.features),
+            "scores": dict(resume_obj.scores),
+            "quality_metrics": dict(resume_obj.quality)
+        }
+
+    def parse(self, file_path: Union[str, Path], timeout_seconds: float = 30.0) -> dict:
+        """
+        Execute resume processing pipeline safely and return optimized data.
         """
 
         file_path = Path(file_path).expanduser()
@@ -212,4 +238,6 @@ class ResumePipeline:
         resume_object.quality["typos"] = count_typos(cleaned_text)
         
         logger.info(f"Successfully finished pipeline processing for {file_path.name}")
-        return resume_object
+        
+        # Return only optimized data for industry-grade storage
+        return self.to_optimized_dict(resume_object)

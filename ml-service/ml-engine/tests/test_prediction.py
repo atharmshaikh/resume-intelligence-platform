@@ -15,7 +15,7 @@ if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
 from ml_engine.ml.inference.predictor import ResumePredictor
-from ml_engine.ml.feature_store.feature_schema import FEATURE_SCHEMA
+from ml_engine.ml.schemas.feature_schema import FEATURE_SCHEMA
 
 def test_resume_predictor() -> None:
     """Predictor should return structured output with labels and probabilities."""
@@ -30,12 +30,16 @@ def test_resume_predictor() -> None:
     # 2. Mock 165-feature dict (missing values fill with 0)
     # Give it good stats to force a Strong prediction (2)
     features = {
+        "has_name": 1,
+        "has_email": 1,
+        "has_phone": 1,
         "candidate_readiness_score": 85.0, # High readiness
         "skills_count": 18,
         "skill_weight_score": 28.5,
         "has_projects": 1,
         "projects_count": 4,
         "has_experience": 1,
+        "has_ml_skills": 1,
         "has_github": 1,
         "has_linkedin": 1,
         "has_cgpa": 1,
@@ -49,18 +53,27 @@ def test_resume_predictor() -> None:
             features[f] = 0.0
 
     # 3. Predict
-    result = predictor.predict(features)
+    json_result = predictor.predict(features)
     
     # 4. Assert structure
+    assert isinstance(json_result, str), "Predictor MUST return a JSON string"
+    import json
+    result = json.loads(json_result)
+    
     assert isinstance(result, dict)
-    assert "label" in result
-    assert "label_name" in result
-    assert "confidence" in result
-    assert "class_probs" in result
-    assert "readiness" in result
+    assert "decision" in result
+    assert "model_output" in result
+    
+    mp = result["model_output"]
+    assert "label" in mp
+    assert "label_name" in mp
+    assert "confidence" in mp
+    assert "class_probs" in mp
+    assert "readiness" in mp
 
     # 5. Assert values
-    label = result["label"]
+    label = mp["label"]
     assert label in [0, 1, 2], f"Label must be 0, 1, or 2, got {label}"
-    assert result["class_probs"][label] >= 0.33, "Highest probability class selected."
-    assert result["readiness"] == 85.0, "Input readiness score echoed back perfectly."
+    assert mp["class_probs"][str(label)] >= 0.33, "Highest probability class selected."
+    assert mp["readiness"] == 85.0, "Input readiness score echoed back perfectly."
+    assert result["decision"] == "Manual Review", "Score 85 should trigger Manual Review per thresholds."

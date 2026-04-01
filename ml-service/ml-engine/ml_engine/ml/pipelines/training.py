@@ -1,30 +1,23 @@
 # pyre-ignore-all-errors
 """
-train_pipeline.py
-=================
-End-to-end training pipeline:
-  1. Generate fresh synthetic dataset (2000 samples, 165 features)
-  2. Load and split dataset (80/20 train-test)
-  3. Train RandomForestModel
-  4. Evaluate on held-out test set
-  5. Print feature importances (top 15)
-  6. Save model artifact
-
-Run directly
-------------
-  # From ml-engine/ directory:
-  ../../.venv/bin/python -m ml_engine.ml.training.train_pipeline
-
-  # Or via run_test.sh (runs pipeline + training):
-  bash run_test.sh --train
+training.py
+===========
+Industry-grade training pipeline for the Resume ML Engine.
+Features:
+  - Generative synthetic data (balanced 3-class distribution)
+  - Automatic model versioning and metadata generation
+  - Config-driven hyperparameter injection
+  - Comprehensive evaluation and metrics reporting
 """
 
 from __future__ import annotations
 
 import logging
 import time
+import yaml
+from datetime import datetime
 from pathlib import Path
-from typing import Tuple
+from typing import Any, Dict, Tuple
 
 import pandas as pd
 from sklearn.metrics import (
@@ -34,17 +27,29 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 
-from ..dataset import SyntheticDatasetGenerator, DATASET_LOADER
-from ..models import RandomForestModel, LABEL_NAMES
+# Core & Engine imports from refactored structure
+from ..core.model_metadata import ModelMetadata
+from ..engine.registry import ModelRegistry
+from ..data.generator import SyntheticDatasetGenerator
+from ..data.loader import DATASET_LOADER
+from ..engine.random_forest import LABEL_NAMES
 
 logger = logging.getLogger(__name__)
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
 _HERE = Path(__file__).resolve().parent
 _ML_ROOT = _HERE.parent.parent.parent          # ml-service/ml-engine/
+_CONFIG_PATH = _ML_ROOT / "ml_engine" / "ml" / "configs" / "training_config.yaml"
 _DATASET_PATH = _ML_ROOT / "ml_engine" / "ml" / "datasets" / "resume_dataset.csv"
 _ARTIFACT_DIR = _ML_ROOT / "ml_engine" / "ml" / "artifacts"
-_MODEL_FILE = _ARTIFACT_DIR / "resume_rf_model.joblib"
+
+def load_config() -> Dict[str, Any]:
+    """Load training configuration from YAML."""
+    if not _CONFIG_PATH.exists():
+        logger.warning("Config file not found at %s. Using defaults.", _CONFIG_PATH)
+        return {}
+    with open(_CONFIG_PATH, "r") as f:
+        return yaml.safe_load(f) or {}
 
 # ── Label names for reporting ──────────────────────────────────────────────────
 _LABEL_NAMES = [LABEL_NAMES[i] for i in sorted(LABEL_NAMES)]
@@ -59,36 +64,39 @@ class TrainingPipelineError(Exception):
 # =============================================================================
 
 def run_training(
-    n_samples: int = 2000,
-    regenerate: bool = True,
-    test_size: float = 0.20,
-    random_state: int = 42,
-) -> RandomForestModel:
+    n_samples: int | None = None,
+    regenerate: bool | None = None,
+    test_size: float | None = None,
+    random_state: int | None = None,
+) -> Any:
     """
-    Full train cycle.
-
-    Parameters
-    ----------
-    n_samples    : number of synthetic resumes to generate
-    regenerate   : if True (default), always regenerate fresh dataset
-    test_size    : fraction of data held out for evaluation
-    random_state : reproducibility seed
-
-    Returns
-    -------
-    Trained RandomForestModel instance.
+    Full industry-grade train cycle.
     """
+    # 1. Load config
+    config = load_config()
+    pipe_cfg = config.get("pipeline", {})
+    
+    # Merge defaults/config with explicit arguments
+    n_samples = n_samples or pipe_cfg.get("n_samples", 2000)
+    regenerate = regenerate if regenerate is not None else pipe_cfg.get("regenerate_data", True)
+    test_size = test_size or pipe_cfg.get("test_size", 0.20)
+    random_state = random_state or pipe_cfg.get("random_state", 42)
+
+    active_arch = config.get("active_model", "random_forest")
+    deployment_cfg = config.get("deployment", {})
+    model_id = deployment_cfg.get("active_model_id", f"{active_arch.upper()}_{int(time.time())}")
 
     sep = "─" * 60
     print(f"\n{sep}")
-    print("  🤖  Resume ML Training Pipeline")
-    print(f"  Dataset  : {n_samples} samples, 165 features")
-    print(f"  Model    : RandomForestClassifier (300 trees, balanced)")
+    print("  🤖  Resume ML Training Pipeline (Industry Standard)")
+    print(f"  Model ID : {model_id}")
+    print(f"  Arch     : {active_arch}")
+    print(f"  Dataset  : {n_samples} samples, 166 features")
     print(f"{sep}\n")
 
     # ── Step 1: Dataset ───────────────────────────────────────────────────────
     if regenerate or not _DATASET_PATH.exists():
-        print("  [1/5] Generating synthetic dataset...")
+        print("  [1/5] Generating fresh synthetic dataset...")
         gen = SyntheticDatasetGenerator()
         gen.generate(n_samples)
     else:
@@ -109,9 +117,23 @@ def run_training(
     print(f"  [3/5] Split → train={len(X_train)}  test={len(X_test)}")
 
     # ── Step 4: Train ─────────────────────────────────────────────────────────
-    print("  [4/5] Training RandomForestModel...")
+    print(f"  [4/5] Training {active_arch}...")
     t0 = time.time()
-    model = RandomForestModel()
+    
+    # Initialize metadata
+    meta_cfg = deployment_cfg.get("model_metadata", {})
+    metadata = ModelMetadata(
+        model_id=model_id,
+        name=meta_cfg.get("name", "Unnamed Model"),
+        version=meta_cfg.get("version", "1.0.0"),
+        description=meta_cfg.get("description", "No description provided."),
+        changelog=meta_cfg.get("changelog", ["Initial build"])
+    )
+
+    # Get model from registry with hyperparams
+    params = config.get("models", {}).get(active_arch, {})
+    model = ModelRegistry.get_model(active_arch, metadata=metadata, **params)
+
     model.train(X_train, y_train)
     elapsed = time.time() - t0
     print(f"         Done in {elapsed:.1f}s")
@@ -123,6 +145,12 @@ def run_training(
     print(f"  Accuracy : {acc*100:.1f}%\n")
     print(classification_report(y_test, y_pred, target_names=_LABEL_NAMES))
 
+    # Record metrics in metadata
+    model.metadata.performance_metrics = {
+        "accuracy": round(float(acc), 4),
+        "timestamp": datetime.now().isoformat()
+    }
+
     # Confusion matrix
     cm = confusion_matrix(y_test, y_pred)
     print("  Confusion Matrix:")
@@ -132,25 +160,17 @@ def run_training(
         row_str = "  ".join(f"{v:>8d}" for v in row_vals)
         print(f"  {_LABEL_NAMES[i][:20]:20s}  {row_str}")
 
-    # Feature importance
-    print(f"\n  Top 15 Most Important Features:")
-    for rank, (feat, imp) in enumerate(model.feature_importances(top_n=15), 1):
-        bar = "█" * int(imp * 200)
-        print(f"  {rank:>2}. {feat:40s}  {imp:.4f}  {bar}")
-
     # ── Save ──────────────────────────────────────────────────────────────────
     _ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
-    model.save(_MODEL_FILE)
-    print(f"\n  ✅  Model saved → {_MODEL_FILE}")
+    save_path = _ARTIFACT_DIR / f"{model_id}.joblib"
+    model.save(save_path)
+    print(f"\n  ✅  Model deployment ready → {save_path}")
+    print(f"  ✅  Metadata (Sidecar) saved → {save_path.with_suffix('.json')}")
     print(f"{sep}\n")
 
     return model
 
 
-# =============================================================================
-# CLI entrypoint
-# =============================================================================
-
 if __name__ == "__main__":
     logging.basicConfig(level=logging.WARNING)
-    run_training(n_samples=2000, regenerate=True)
+    run_training()

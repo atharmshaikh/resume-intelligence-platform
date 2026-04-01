@@ -218,14 +218,16 @@ def test_pipeline_runs_successfully() -> None:
 
     for resume_file in resume_files:
         result = pipeline.parse(resume_file)
-        d = result.to_dict()
-
+        
         # Basic structural assertions
-        assert isinstance(d, dict), "Result must be a dict"
-        assert "name" in d, "Result must have 'name'"
-        assert "features" in d, "Result must have 'features'"
+        assert isinstance(result, dict), "Result must be a dict"
+        assert "identity" in result, "Result must have 'identity' context"
+        assert "features" in result, "Result must have 'features' for ML"
 
-        feats = d["features"]
+        name = result["identity"].get("name")
+        assert name is not None, "Identity must have 'name'"
+
+        feats = result["features"]
         assert isinstance(feats, dict), "features must be a dict"
         assert len(feats) >= 150, f"Expected 150+ features, got {len(feats)}"
 

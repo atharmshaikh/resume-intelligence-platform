@@ -307,18 +307,22 @@ sample_resumes/
 ml-service/ml-engine/sample_resumes/
 
 # -----------------------------
-# RESUME ML-ENGINE RULES
+# ML-ENGINE DATA PROTECTION
 # -----------------------------
-# Ignore ML models and trained artifacts explicitly mapped
-ml-service/ml-engine/ml_engine/ml/artifacts/
-**/artifacts/
-*.joblib
-*.pkl
+# Ignore raw resumes and processed artifacts to prevent PII leakage
+ml-service/ml-engine/ml_engine/data/uploads/*
+ml-service/ml-engine/ml_engine/data/processed/*
+ml-service/ml-engine/ml_engine/data/results/*
 
-# Ignore generated datasets
-ml-service/ml-engine/ml_engine/ml/datasets/
-*.csv
-*.jsonl
+# Allow .gitkeep files to maintain folder structure
+!ml-service/ml-engine/ml_engine/data/uploads/.gitkeep
+!ml-service/ml-engine/ml_engine/data/processed/.gitkeep
+!ml-service/ml-engine/ml_engine/data/results/.gitkeep
+
+# Ignore large ML artifacts and synthetic datasets
+ml-service/ml-engine/ml_engine/ml/artifacts/*.joblib
+ml-service/ml-engine/ml_engine/ml/datasets/*.csv
+ml-service/ml-engine/ml_engine/ml/datasets/*.jsonl
 
 # Ignore engine debug/demo cache
 debug_extraction.py
