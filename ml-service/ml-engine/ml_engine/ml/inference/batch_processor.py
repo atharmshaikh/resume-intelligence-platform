@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from ml_engine.pipeline.resume_pipeline import ResumePipeline
+from ml_engine.ml.pipelines.parsing import ResumePipeline
 from ml_engine.ml.inference.predictor import ResumePredictor
 from ml_engine.utils.cleanup import CleanupService
 
@@ -34,16 +34,21 @@ def process_batch(config_path: str | None = None) -> None:
         storage = runtime.get("storage", {})
         cleanup_cfg = runtime.get("cleanup", {})
         
-        uploads_dir = Path(storage.get("uploads", "ml_engine/data/uploads"))
-        processed_dir = Path(storage.get("processed", "ml_engine/data/processed"))
-        results_dir = Path(storage.get("results", "ml_engine/data/results"))
+        # ── Standardized Central Storage Resolution ───────────────────
+        # Here we prioritize absolute resolution for cross-platform stability.
+        _HERE = Path(__file__).resolve().parent
+        _ROOT = _HERE.parent.parent.parent.parent.parent # Project Root
         
-        # Ensure directories exist
+        uploads_dir = (_ROOT / storage.get("uploads", "data/uploads")).resolve()
+        processed_dir = (_ROOT / storage.get("processed", "data/processed")).resolve()
+        results_dir = (_ROOT / storage.get("results", "data/results")).resolve()
+        
+        # Ensure directories exist (Standardizing the volume)
         for d in [uploads_dir, processed_dir, results_dir]:
             d.mkdir(parents=True, exist_ok=True)
             
     except Exception as exc:
-        logger.error(f"Failed to initialize Batch Engine: {exc}")
+        logger.error(f"Failed to initialize Decoupled Batch Engine: {exc}")
         sys.exit(1)
 
     # 2. Iterate and Process Uploads

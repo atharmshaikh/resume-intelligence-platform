@@ -17,9 +17,9 @@ deployment:
 # ── Runtime & Storage ────────────────────────────────────────────────────
 runtime:
   storage:
-    uploads: "ml_engine/data/uploads"
-    processed: "ml_engine/data/processed"
-    results: "ml_engine/data/results"
+    uploads: "data/uploads"
+    processed: "data/processed"
+    results: "data/results"
   cleanup:
     retention_hours: 24
     enabled: true

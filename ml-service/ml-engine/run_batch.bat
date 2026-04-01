@@ -5,6 +5,9 @@
 
 set VENV_DIR=..\..\.venv
 
+:: 0. Ensure we are in the correct directory
+cd /d "%~dp0"
+
 :: 1. Check if venv exists, create if missing
 if not exist "%VENV_DIR%" (
     echo 🏗️  Creating virtual environment in %VENV_DIR%...

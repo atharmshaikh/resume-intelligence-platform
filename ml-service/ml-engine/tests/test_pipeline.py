@@ -29,24 +29,25 @@ _ML_ENGINE_ROOT = _HERE.parent
 if str(_ML_ENGINE_ROOT) not in sys.path:
     sys.path.insert(0, str(_ML_ENGINE_ROOT))
 
-from ml_engine.pipeline import ResumePipeline  # noqa: E402  (after sys.path fix)
+from ml_engine.ml.pipelines.parsing import ResumePipeline  # noqa: E402  (after sys.path fix)
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _find_resumes(base_dir: Path) -> list[Path]:
-    resume_dir = base_dir / "sample_resumes"
+def _find_resumes(base_dir: Path) -> List[Path]:
+    """Search for PDF/Docx resumes in the data/uploads directory."""
+    # Updated: Now looking in the standardized data/uploads folder
+    resume_dir = base_dir / "ml_engine" / "data" / "uploads"
+    
     if not resume_dir.exists():
-        raise FileNotFoundError(f"sample_resumes/ not found at: {base_dir}")
-    files = sorted(
-        f for f in resume_dir.iterdir()
-        if f.is_file() and f.suffix.lower() in {".pdf", ".docx"}
-    )
-    if not files:
-        raise FileNotFoundError("No .pdf / .docx files found in sample_resumes/")
-    return files
+        msg = f"Standardized uploads directory not found at: {resume_dir}. Please add resumes to begin testing."
+        print(f"⚠️  {msg}")
+        return []
+
+    resumes = list(resume_dir.glob("*.pdf")) + list(resume_dir.glob("*.docx"))
+    return resumes
 
 
 def _explain_output(result_dict: dict) -> None:

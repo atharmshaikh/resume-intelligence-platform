@@ -7,6 +7,9 @@
 # Define venv path relative to this script
 VENV_DIR="../../.venv"
 
+# 0. Ensure we are in the correct directory
+cd "$(dirname "$0")"
+
 # 1. Check if venv exists, create if missing
 if [ ! -d "$VENV_DIR" ]; then
     echo "🏗️  Creating virtual environment in $VENV_DIR..."

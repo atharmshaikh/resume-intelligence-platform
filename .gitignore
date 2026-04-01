@@ -19,10 +19,7 @@ dist/
 *.egg-info/
 .eggs/
 
-# -----------------------------
-# ML / DATA
-# -----------------------------
-data/
+# (Removed redundant data/ line for root repository control)
 datasets/
 models/
 checkpoints/
@@ -307,17 +304,17 @@ sample_resumes/
 ml-service/ml-engine/sample_resumes/
 
 # -----------------------------
-# ML-ENGINE DATA PROTECTION
+# CENTRAL DATA REPOSITORY PROTECTION
 # -----------------------------
-# Ignore raw resumes and processed artifacts to prevent PII leakage
-ml-service/ml-engine/ml_engine/data/uploads/*
-ml-service/ml-engine/ml_engine/data/processed/*
-ml-service/ml-engine/ml_engine/data/results/*
+# Ignore root-level raw resumes and processed artifacts
+/data/uploads/*
+/data/processed/*
+/data/results/*
 
-# Allow .gitkeep files to maintain folder structure
-!ml-service/ml-engine/ml_engine/data/uploads/.gitkeep
-!ml-service/ml-engine/ml_engine/data/processed/.gitkeep
-!ml-service/ml-engine/ml_engine/data/results/.gitkeep
+# Allow .gitkeep files to maintain repository volume structure
+!/data/uploads/.gitkeep
+!/data/processed/.gitkeep
+!/data/results/.gitkeep
 
 # Ignore large ML artifacts and synthetic datasets
 ml-service/ml-engine/ml_engine/ml/artifacts/*.joblib
