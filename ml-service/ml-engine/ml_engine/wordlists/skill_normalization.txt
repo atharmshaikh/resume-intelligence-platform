@@ -1,0 +1,12 @@
+cpp:c++
+c++:c++
+mysql:mysql
+my sql:mysql
+html:html
+css:css
+js:javascript
+node js:nodejs
+mongo db:mongodb
+angular js:angularjs
+react js:reactjs
+power bi:powerbi

@@ -1,0 +1,36 @@
+bachelor
+b.tech
+b.e
+b.sc
+bsc
+bca
+b.c.a
+b.sc it
+bsc it
+master
+m.tech
+m.e
+m.sc
+msc
+mca
+m.c.a
+m.sc it
+msc it
+mba
+phd
+diploma
+degree
+engineering
+technology
+science
+information technology
+computer science
+computer engineering
+software engineering
+electronics
+electrical
+mechanical
+civil
+b.com
+m.com
+pgdca

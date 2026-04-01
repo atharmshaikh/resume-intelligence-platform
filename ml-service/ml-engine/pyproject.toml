@@ -1,18 +1,62 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=69", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ml-engine"
-version = "0.1.0"
+version = "0.4.0"
 description = "Resume ATS ML Engine"
-authors = [{name = "Athar Shaikh"}]
-requires-python = ">=3.10"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "MIT"
+
+authors = [
+    {name = "Athar Shaikh"},
+    {name = "Sahil Chunara"}
+]
+
+keywords = [
+    "resume",
+    "ats",
+    "nlp",
+    "resume-parsing",
+    "machine-learning",
+]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent"
+]
 
 dependencies = [
-    "pdfminer.six",
-    "python-docx"
+    "pdfminer.six>=20231228",
+    "python-docx>=1.1.0",
+    "pyspellchecker>=0.8.1",
+    "pydantic>=2.6.0",
+    "pandas>=2.2.0",
+    "scikit-learn>=1.4.0",
+    "joblib>=1.3.2",
+    "streamlit>=1.31.0",
+    "PyYAML>=6.0.1"
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
+include = ["ml_engine*"]
+
+[tool.setuptools.package-data]
+ml_engine = [
+    "wordlists/*.txt"
+]
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+log_cli = true
+log_cli_level = "WARNING"

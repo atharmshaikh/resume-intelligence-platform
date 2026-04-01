@@ -1,0 +1,34 @@
+html
+css
+javascript
+php
+sql
+mysql
+git
+linux
+bash
+android
+ios
+flutter
+react native
+bootstrap
+jquery
+opencv
+pandas
+numpy
+rest api
+json
+xml
+agile
+scrum
+excel
+powerpoint
+figma
+postman
+unit testing
+debugging
+problem solving
+oop
+object oriented
+data structures
+algorithms

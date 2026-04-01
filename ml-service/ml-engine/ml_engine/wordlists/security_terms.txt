@@ -1,0 +1,10 @@
+xss
+ssrf
+csrf
+oauth
+jwt
+sql
+nosql
+encryption
+cyber
+cybersecurity

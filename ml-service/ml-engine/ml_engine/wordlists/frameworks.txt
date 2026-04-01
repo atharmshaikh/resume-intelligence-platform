@@ -1,0 +1,37 @@
+react
+angular
+vue
+nodejs
+node.js
+django
+flask
+fastapi
+spring
+springboot
+spring boot
+laravel
+express
+expressjs
+next.js
+nextjs
+nuxt.js
+nuxtjs
+bootstrap
+tailwind
+jquery
+redux
+tensorflow
+pytorch
+keras
+sklearn
+scikit-learn
+pandas
+numpy
+matplotlib
+opencv
+langchain
+flutter
+react native
+android sdk
+ionic
+svelte

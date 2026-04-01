@@ -1,4 +1,0 @@
-pdfminer.six
-python-docx
-pydantic
-pyspellchecker

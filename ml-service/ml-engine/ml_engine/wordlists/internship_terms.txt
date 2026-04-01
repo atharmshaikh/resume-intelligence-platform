@@ -1,0 +1,9 @@
+intern
+internship
+trainee
+apprentice
+junior developer
+software trainee
+summer intern
+winter intern
+fresher

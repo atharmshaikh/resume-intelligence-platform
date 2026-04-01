@@ -1,0 +1,156 @@
+# Cloud & DevOps
+aws
+azure
+gcp
+docker
+kubernetes
+terraform
+ansible
+jenkins
+github actions
+gitlab ci
+circleci
+heroku
+netlify
+vercel
+nginx
+apache
+linux
+ubuntu
+centos
+bash
+shell
+git
+github
+gitlab
+ci/cd
+helm
+prometheus
+grafana
+elasticsearch
+kibana
+logstash
+rabbitmq
+celery
+redis
+# Data Science & AI
+tensorflow
+pytorch
+keras
+scikit-learn
+sklearn
+pandas
+numpy
+scipy
+matplotlib
+seaborn
+plotly
+jupyter
+spark
+hadoop
+kafka
+airflow
+dbt
+tableau
+powerbi
+mlflow
+huggingface
+langchain
+openai
+llm
+# Security
+penetration testing
+ethical hacking
+burp suite
+metasploit
+wireshark
+nmap
+kali linux
+owasp
+ssl
+tls
+jwt
+oauth
+oauth2
+xss
+sql injection
+ssrf
+csrf
+# Web Dev
+react
+angular
+vue
+svelte
+nextjs
+next.js
+nuxtjs
+nuxt.js
+nodejs
+node.js
+express
+django
+flask
+fastapi
+spring
+spring boot
+laravel
+bootstrap
+tailwind
+jquery
+html
+css
+sass
+typescript
+graphql
+rest api
+restful
+# Mobile Dev
+flutter
+android
+ios
+react native
+kotlin
+swift
+dart
+android studio
+xcode
+firebase
+# Database
+mysql
+postgresql
+sqlite
+mongodb
+redis
+firebase
+oracle
+sql server
+mariadb
+cassandra
+dynamodb
+supabase
+neo4j
+# Core CS
+data structures
+algorithms
+oop
+object oriented
+design patterns
+system design
+microservices
+api
+rest
+json
+xml
+yaml
+linux
+git
+# Testing
+unit testing
+selenium
+jest
+pytest
+junit
+postman
+swagger
+tdd
+bdd
