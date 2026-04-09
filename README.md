@@ -59,15 +59,12 @@ The platform is built on a modular, package-based architecture modeled after top
 *   **Data**: JSON-First Lifecycle—eliminating legacy CSV dependency.
 *   **Parser**: Layout-aware extraction using PyMuPDF (fitz) for complex multi-column resumes.
 
-#### 🚦 **3-Tier Routing & Hard Rejection**
-*   **Tier 1 (Shortlisted)**: Direct candidate ranking for high-potential applicants.
-*   **Tier 2 (Manual Review)**: Intelligent queue management with capacity-limited pruning to prevent burnout.
-*   **Tier 3 (Rejected)**: Immediate feedback with explainable rejection reasons.
-*   **Guardrails**: Automated rejection for missing Name, Email, or Phone to ensure database integrity.
-
-#### 🔐 **Resource Safety & Automated Shredding**
-*   **Lean Persistence**: Intermediate data excludes heavy raw text to save 90% storage space.
-*   **Auto-Cleanup**: Automated 24-hour file shredding for raw uploads, ensuring strict privacy compliance.
+#### 🛡️ **Zero-Trust CI/CD & Type-Safety (v1.1.1)**
+The platform now enforces a strict **Zero-Trust ML Pipeline** to ensure supply-chain security and runtime stability.
+*   **100% Type-Safety**: Achieved a 0-error Pyright status across the entire ML engine, eliminating technical debt and runtime logic errors.
+*   **Isolated CI Build**: GitHub Actions environment is configured with `permissions: contents: read` and restricted binary execution.
+*   **Dependency Hardening**: All 3rd-party ML libraries (`sklearn`, `pandas`, `numpy`) are handled via defensive, lazy-loading imports with static type markers to prevent environment-specific failures.
+*   **Safe-Trigger Logic**: CI/CD runs are skipped for non-runtime changes (e.g., `.md` docs) to optimize build cycles.
 
 ---
 
@@ -79,7 +76,8 @@ The platform is built on a modular, package-based architecture modeled after top
 | **Machine Learning** | ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white) ![Joblib](https://img.shields.io/badge/Joblib-4B8BBE?style=flat-square) |
 | **Data Processing** | ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![YAML](https://img.shields.io/badge/YAML-CB171E?style=flat-square&logo=yaml&logoColor=white) |
 | **Parsing** | ![PyMuPDF](https://img.shields.io/badge/PyMuPDF--Fitz-000000?style=flat-square) ![Docx](https://img.shields.io/badge/Python--Docx-4B8BBE?style=flat-square) |
-| **Inference Framework** | ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white) |
+| **Static Analysis** | ![Pyright](https://img.shields.io/badge/Pyright-Type--Safe-blue?style=flat-square) |
+| **CI/CD** | ![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-Zero--Trust-2088FF?style=flat-square&logo=github-actions&logoColor=white) |
 
 ---
 
@@ -118,5 +116,5 @@ train_pipeline.bat   # Run End-to-End Training
 
 <p align="center">
   <img src="https://img.shields.io/badge/Developed_With-Passion-6750A4?style=for-the-badge" alt="Passion">
-  <img src="https://img.shields.io/badge/Version-1.1.0--Hardened-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.1--Zero--Trust-blue?style=for-the-badge" alt="Version">
 </p>

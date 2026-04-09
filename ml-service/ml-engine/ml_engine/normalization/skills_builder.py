@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def build_skills(
     sections: Dict[str, List[str]],
     raw_text: str,
-    project_skills: Set[str] = None
+    project_skills: Set[str] | None = None
 ) -> List[str]:
     """
     Build normalized skills list.

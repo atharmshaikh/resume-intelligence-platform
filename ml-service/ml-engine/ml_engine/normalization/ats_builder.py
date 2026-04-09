@@ -36,6 +36,14 @@ from ml_engine.normalization.ats_builder_utils import (
 logger = logging.getLogger(__name__)
 
 
+def fix_location(location: Any) -> str:
+    """Standardize location string (Legacy helper restored for pipeline compatibility)."""
+    if not location:
+        return "Unknown"
+    loc = str(location).strip()
+    return loc if loc else "Unknown"
+
+
 def build_ats_structure(
     raw_text: str,
     sections: Dict[Any, Any] | Any,

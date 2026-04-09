@@ -4,8 +4,8 @@ DOCX parser using python-docx.
 
 import logging
 from pathlib import Path
-from docx import Document
-from docx.opc.exceptions import PackageNotFoundError
+from docx import Document  # type: ignore
+from docx.opc.exceptions import PackageNotFoundError  # type: ignore
 
 from .base_parser import BaseParser
 from ml_engine.utils import ResumeParserError

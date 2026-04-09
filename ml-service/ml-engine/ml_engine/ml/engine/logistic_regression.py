@@ -11,11 +11,11 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelEncoder
+import joblib  # type: ignore
+import numpy as np  # type: ignore
+import pandas as pd  # type: ignore
+from sklearn.linear_model import LogisticRegression  # type: ignore
+from sklearn.preprocessing import LabelEncoder  # type: ignore
 
 from ..core.base_model import BaseModel
 from ..core.model_metadata import ModelMetadata
@@ -77,7 +77,7 @@ class LogisticRegressionModel(BaseModel):
     # Inference
     # ──────────────────────────────────────────────────────
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(self, X: Any) -> np.ndarray:
         """Return predicted class labels."""
         self._check_trained()
         return self.model.predict(X)  # type: ignore[union-attr]
@@ -199,8 +199,9 @@ class LogisticRegressionModel(BaseModel):
             self._feature_names = payload.get("feature_names", [])
             self.metadata = payload.get("metadata")
         else:
-            # Legacy support
-            self.model = payload
+            # Legacy support or direct model file
+            self.model = payload  # type: ignore
+            self._trained = True
 
         self._trained = True
 

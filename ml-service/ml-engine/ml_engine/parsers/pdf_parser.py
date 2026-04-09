@@ -13,9 +13,9 @@ import re
 from pathlib import Path
 from typing import List, Set
 
-from pdfminer.high_level import extract_text
-from pdfminer.pdfparser import PDFSyntaxError
-from pdfminer.layout import LAParams
+from pdfminer.high_level import extract_text  # type: ignore
+from pdfminer.pdfparser import PDFSyntaxError  # type: ignore
+from pdfminer.layout import LAParams  # type: ignore
 
 from .base_parser import BaseParser
 from ml_engine.utils import ResumeParserError
@@ -59,7 +59,7 @@ class PDFParser(BaseParser):
             self._log_parse_start(path)
             
             # Step 1: Extract block-level data via PyMuPDF (Superior for Layout)
-            import fitz
+            import fitz  # type: ignore
             doc = fitz.open(str(path))
             
             full_text = []

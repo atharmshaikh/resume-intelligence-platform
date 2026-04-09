@@ -164,7 +164,7 @@ class SectionClassifier:
     def __init__(self):
         self.classifications: List[SectionClassification] = []
     
-    def classify(self, section_name: str, content: List[str] = None) -> SectionClassification:
+    def classify(self, section_name: str, content: List[str] | None = None) -> SectionClassification:
         """
         Classify a section.
         
@@ -229,7 +229,7 @@ class SectionClassifier:
     
     def _analyze_keywords(self, section_name: str, content: List[str]) -> Optional[SectionClassification]:
         """Analyze content keywords to determine category."""
-        content_text = ' '.join(content).lower()
+        content_text = ' '.join(content or []).lower()
         
         scores: Dict[str, int] = {cat: 0 for cat in CONTENT_KEYWORDS.keys()}
         
@@ -243,7 +243,7 @@ class SectionClassifier:
         if not scores or max(scores.values()) == 0:
             return None
         
-        best_category = max(scores, key=scores.get)
+        best_category = max(scores, key=lambda k: scores[k])
         best_score = scores[best_category]
         total_matches = sum(scores.values())
         
@@ -257,7 +257,7 @@ class SectionClassifier:
             method="keyword"
         )
     
-    def _apply_heuristics(self, section_name: str, content: List[str] = None) -> Optional[SectionClassification]:
+    def _apply_heuristics(self, section_name: str, content: List[str] | None = None) -> Optional[SectionClassification]:
         """Apply heuristic rules for classification."""
         normalized = section_name.lower().strip()
         
@@ -318,7 +318,7 @@ class SectionClassifier:
         return results
 
 
-def classify_section(section_name: str, content: List[str] = None) -> str:
+def classify_section(section_name: str, content: List[str] | None = None) -> str:
     """
     Convenience function to classify a section.
     

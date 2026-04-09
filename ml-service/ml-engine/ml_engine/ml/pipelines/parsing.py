@@ -177,9 +177,9 @@ _HEADING_ALIASES = {
     "certifications": "achievements",
 }
 
-class ResumePipeline:
+class CandidateParser:
     """
-    Central pipeline controller for resume parsing.
+    Central orchestrator for candidate-level parsing and validation.
     """
 
     def __init__(self):
@@ -339,7 +339,7 @@ class ResumePipeline:
         base_resume.skills = best_skills
         base_resume.project_details = best_projects
         base_resume.projects = [
-            " ".join(x for x in [p["name"], p["duration"], p["description"]] if x).strip()
+            " ".join([str(x) for x in [p.get("name"), p.get("duration"), p.get("description")] if x]).strip()
             for p in best_projects
         ]
         base_resume.experience = best_experience
@@ -519,11 +519,11 @@ class ResumePipeline:
 
         if not _validate_features(features, merged_skills):
             logger.warning("Feature validation failed for resume. Skipping.")
-            return None
+            return {}
 
         if not _passes_hard_rules(features):
             logger.warning("Hard rules failed for resume. Skipping.")
-            return None
+            return {}
 
         result = {
             "identity": identity,
