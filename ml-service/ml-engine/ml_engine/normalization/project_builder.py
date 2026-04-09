@@ -5,7 +5,7 @@ Extracts and normalizes project information from resume sections.
 """
 
 import logging
-from typing import Any, Dict, List, TypedDict
+from typing import Dict, List, TypedDict
 
 from ml_engine.normalization.project_extractor import extract_project_details, _PROJECT_NOISE_RE
 

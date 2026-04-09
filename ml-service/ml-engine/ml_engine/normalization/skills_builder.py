@@ -5,7 +5,7 @@ Extracts and normalizes skills from resume sections.
 """
 
 import logging
-from typing import Any, Dict, List, Set
+from typing import Dict, List, Set
 
 from ml_engine.normalization.skill_extractor import extract_skills as extract_skills_from_text
 from ml_engine.normalization.skill_extractor import TECH_KEYWORDS
@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 def build_skills(
     sections: Dict[str, List[str]],
     raw_text: str,
-    project_skills: Set[str] = None
+    project_skills: Set[str] | None = None
 ) -> List[str]:
     """
     Build normalized skills list.

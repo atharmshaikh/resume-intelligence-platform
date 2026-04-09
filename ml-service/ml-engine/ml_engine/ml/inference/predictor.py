@@ -14,11 +14,11 @@ import json
 import logging
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-import pandas as pd
-import numpy as np
-import joblib
+import pandas as pd  # type: ignore
+import numpy as np  # type: ignore
+import joblib  # type: ignore
 
 from ..schemas.feature_schema import FEATURE_SCHEMA
 from ..schemas.feature_vector import FEATURE_VECTOR_BUILDER

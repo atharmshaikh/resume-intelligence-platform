@@ -98,7 +98,7 @@ class ResumePipeline:
             ml_result = None
             if self.predictor:
                 ml_result = self.predictor.predict(features)
-                logger.info(f"    Prediction complete")
+                logger.info("    Prediction complete")
             
             # Build result
             result["identity"] = {

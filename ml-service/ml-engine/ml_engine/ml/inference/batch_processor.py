@@ -1,4 +1,3 @@
-# pyre-ignore-all-errors
 """
 batch_processor.py
 ==================
@@ -64,7 +63,7 @@ def _resolve_runtime_paths(config_path: str | None) -> Tuple[Path, Path, Path, D
     uploads_dir = (_root.parent.parent / storage.get("uploads", "data/uploads")).resolve()
     processed_dir = (_root.parent.parent / storage.get("processed", "data/processed")).resolve()
     results_dir = (_root.parent.parent / storage.get("results", "data/results")).resolve()
-    return uploads_dir, processed_dir, results_dir
+    return uploads_dir, processed_dir, results_dir, runtime_cfg
 
 
 def _write_json(path: Path, payload: Dict[str, Any]) -> None:
@@ -80,7 +79,7 @@ def process_batch(config_path: str | None = None) -> None:
     try:
         pipeline = ResumePipeline()
         predictor = ResumePredictor(config_path)
-        uploads_dir, processed_dir, results_dir = _resolve_runtime_paths(config_path)
+        uploads_dir, processed_dir, results_dir, config = _resolve_runtime_paths(config_path)
 
         for d in [uploads_dir, processed_dir, results_dir]:
             d.mkdir(parents=True, exist_ok=True)
@@ -106,7 +105,7 @@ def process_batch(config_path: str | None = None) -> None:
                 slug_name = re.sub(r"[^a-z0-9]+", "-", resume_path.stem.lower()).strip("-")
 
                 # ── Parser Output → processed/ ────────────────────────
-                result = pipeline.parse(resume_path)
+                result = pipeline.process(resume_path)
 
                 if result is None:
                     logger.info("Skipping %s: failed validation or hard rules", slug_name)

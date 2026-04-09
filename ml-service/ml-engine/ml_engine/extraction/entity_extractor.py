@@ -18,14 +18,13 @@ Features:
 
 import re
 from itertools import islice
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, Optional
 import logging
 
 from .keyword_loader import load_wordlist
 from .extraction_utils import (
-    extract_emails, extract_phones, extract_urls,
-    validate_email, validate_phone, validate_name, validate_location,
-    is_contact_line, clean_line, normalize_text,
+    extract_emails, validate_email, validate_name, validate_location,
+    clean_line, normalize_text,
 )
 from ml_engine.utils.exceptions import ExtractionError
 
@@ -440,7 +439,7 @@ def extract_entities(text: str) -> Dict[str, Optional[str]]:
         }
 
         # Log extraction summary
-        logger.info(f"Entity extraction complete:")
+        logger.info("Entity extraction complete:")
         logger.info(f"  - Name: {entities['name']}")
         logger.info(f"  - Email: {entities['email']}")
         logger.info(f"  - Phone: {entities['phone']}")

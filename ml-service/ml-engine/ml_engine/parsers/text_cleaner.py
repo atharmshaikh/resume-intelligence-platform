@@ -133,7 +133,7 @@ def split_into_lines(text: str) -> List[str]:
 def is_bullet_line(line: str) -> bool:
     """Check if line starts with a bullet character."""
     stripped = line.strip()
-    return stripped and stripped[0] in _BULLET_CHARS
+    return bool(stripped and stripped[0] in _BULLET_CHARS)
 
 
 def is_heading_line(line: str) -> bool:

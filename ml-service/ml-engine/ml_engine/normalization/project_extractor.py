@@ -6,7 +6,7 @@ Low-level project extraction from raw text.
 
 import logging
 import re
-from typing import Dict, List, TypedDict
+from typing import List, TypedDict
 
 from ml_engine.extraction import load_wordlist
 

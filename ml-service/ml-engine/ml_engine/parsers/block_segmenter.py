@@ -12,7 +12,7 @@ This enables smarter section detection than line-by-line parsing.
 
 import logging
 import re
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from dataclasses import dataclass, asdict
 
 logger = logging.getLogger(__name__)

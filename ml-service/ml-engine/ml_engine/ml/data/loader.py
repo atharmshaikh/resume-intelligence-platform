@@ -12,9 +12,9 @@ import json
 import logging
 import glob
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
-import pandas as pd
+import pandas as pd  # type: ignore  # type: ignore  # type: ignore
 from ..schemas.feature_schema import FEATURE_LIST
 
 logger = logging.getLogger(__name__)

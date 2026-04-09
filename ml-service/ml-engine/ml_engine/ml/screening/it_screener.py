@@ -154,10 +154,10 @@ def _extract_refined_projects(normalized: Dict[str, Any], refined_skills: List[s
 def _simplify_experience(normalized: Dict[str, Any]) -> Dict[str, Any]:
     role = ""
     for line in normalized.get("experience", []) or []:
-        l = str(line).strip()
-        low = l.lower()
+        line_str = str(line).strip()
+        low = line_str.lower()
         if any(k in low for k in ("intern", "developer", "engineer", "analyst", "trainee", "frontend")):
-            role = "frontend intern" if "frontend" in low and "intern" in low else l
+            role = "frontend intern" if "frontend" in low and "intern" in low else line_str
             break
     return {
         "role": role,

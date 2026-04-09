@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Any
 from .model_metadata import ModelMetadata
 
 class BaseModel(ABC):
@@ -11,21 +11,21 @@ class BaseModel(ABC):
         self.metadata = metadata
 
     @abstractmethod
-    def train(self, X, y):
+    def train(self, X: Any, y: Any) -> None:
         """Train the model on features X and labels y."""
         pass
 
     @abstractmethod
-    def predict(self, X):
+    def predict(self, X: Any) -> Any:
         """Predict labels for input X."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
-    def save(self, path):
+    def save(self, path: Any) -> None:
         """Serialize model and metadata to disk."""
         pass
 
     @abstractmethod
-    def load(self, path):
+    def load(self, path: Any) -> None:
         """Load model and metadata from disk."""
         pass

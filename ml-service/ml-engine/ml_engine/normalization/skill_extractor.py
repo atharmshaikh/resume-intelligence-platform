@@ -6,7 +6,7 @@ Low-level skill extraction from raw text.
 
 import logging
 import re
-from typing import List, Set
+from typing import List, Set, Tuple
 
 from ml_engine.extraction import load_wordlist
 
@@ -58,12 +58,12 @@ def _normalize_skill_token(token: str) -> str:
     normalized = str(token or "").lower().strip()
     normalized = re.sub(r"\s+", " ", normalized.replace(".", " ")).strip()
     normalized = _CANONICAL_ALIASES.get(normalized, normalized)
-    normalized = _SKILL_NORMALIZATION.get(normalized, normalized).strip().lower()
+    normalized = (_SKILL_NORMALIZATION.get(normalized, normalized) or "").strip().lower()
     normalized = _CANONICAL_ALIASES.get(normalized, normalized)
-    return normalized
+    return normalized or ""
 
 
-def extract_skills(text: str | List[str]) -> List[str]:
+def extract_skills(text: str | List[str]) -> Tuple[List[str], int]:
     """
     Extract skills from text.
     
@@ -71,7 +71,7 @@ def extract_skills(text: str | List[str]) -> List[str]:
         text: Raw text or list of lines
         
     Returns:
-        List of normalized skills
+        Tuple of (List of normalized skills, Typo count)
     """
     if isinstance(text, list):
         text = "\n".join(text)

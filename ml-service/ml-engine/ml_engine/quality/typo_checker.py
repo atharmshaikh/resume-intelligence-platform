@@ -7,7 +7,10 @@ import re
 import logging
 from typing import Dict, Any
 
-from spellchecker import SpellChecker
+try:
+    from spellchecker import SpellChecker  # type: ignore
+except ImportError:
+    SpellChecker = None # type: ignore
 from ml_engine.extraction import load_wordlist
 
 logger = logging.getLogger(__name__)
@@ -72,6 +75,8 @@ _spell = None
 def _get_spellchecker():
     global _spell
     if _spell is None:
+        if SpellChecker is None:
+            return None
         _spell = SpellChecker(distance=1)
     return _spell
 
@@ -153,6 +158,13 @@ def _count_typos_impl(text: str) -> Dict[str, Any]:
         filtered_words.append(word)
 
     spell = _get_spellchecker()
+    if spell is None:
+        return {
+            "typo_count": 0,
+            "total_words": 0,
+            "typo_ratio": 0.0,
+            "typo_words": []
+        }
     filtered_words = filtered_words[:MAX_SPELLCHECK_WORDS]
     misspelled = set(spell.unknown(filtered_words[:MAX_SPELLCHECK_WORDS]))
 

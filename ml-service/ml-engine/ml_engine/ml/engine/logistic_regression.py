@@ -7,16 +7,15 @@ Part of the refined ml_engine.ml.engine package.
 
 from __future__ import annotations
 
-import json
 import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
-import numpy as np
-import pandas as pd
-from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelEncoder
+import joblib  # type: ignore
+import numpy as np  # type: ignore
+import pandas as pd  # type: ignore
+from sklearn.linear_model import LogisticRegression  # type: ignore
+from sklearn.preprocessing import LabelEncoder  # type: ignore
 
 from ..core.base_model import BaseModel
 from ..core.model_metadata import ModelMetadata
@@ -41,19 +40,11 @@ class LogisticRegressionModel(BaseModel):
     Supports industry-standard versioning and metadata manifests.
     """
 
-    def __init__(self, metadata: Optional[ModelMetadata] = None, **kwargs) -> None:
+    def __init__(self, metadata: Optional[ModelMetadata] = None) -> None:
         super().__init__(metadata)
-
-        # Default parameters
-        params = {
-            "solver": "lbfgs",
-            "max_iter": 500,
-            "random_state": 42,
-        }
-        # Override with kwargs if provided
-        params.update(kwargs)
-
-        self.model: Optional[LogisticRegression] = LogisticRegression(**params)
+        self.model: LogisticRegression = LogisticRegression(
+            max_iter=1000, class_weight="balanced"
+        )
         self._feature_names: List[str] = []
         self._label_encoder: LabelEncoder = LabelEncoder()
         self._trained: bool = False
@@ -78,7 +69,7 @@ class LogisticRegressionModel(BaseModel):
     # Inference
     # ──────────────────────────────────────────────────────
 
-    def predict(self, X: pd.DataFrame) -> np.ndarray:
+    def predict(self, X: Any) -> np.ndarray:  # type: ignore[override]
         """Return predicted class labels."""
         self._check_trained()
         return self.model.predict(X)  # type: ignore[union-attr]
@@ -200,8 +191,8 @@ class LogisticRegressionModel(BaseModel):
             self._feature_names = payload.get("feature_names", [])
             self.metadata = payload.get("metadata")
         else:
-            # Legacy support
-            self.model = payload
+            # Legacy support or direct model file
+            self.model = payload  # type: ignore
 
         self._trained = True
 

@@ -6,7 +6,6 @@ Keeps text normalization consistent across the engine.
 import re
 import logging
 import unicodedata
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +104,7 @@ def normalize_ocr_spacing(text: str) -> str:
 def clean_text(text: str) -> str:
     try:
         return _clean_text_impl(text)
-    except Exception as exc:
+    except Exception:
         logger.exception("Text cleaning failed unexpectedly. Returning raw string.")
         return text if isinstance(text, str) else ""
 
