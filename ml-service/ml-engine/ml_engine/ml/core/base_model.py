@@ -18,7 +18,7 @@ class BaseModel(ABC):
     @abstractmethod
     def predict(self, X: Any) -> Any:
         """Predict labels for input X."""
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def save(self, path: Any) -> None:

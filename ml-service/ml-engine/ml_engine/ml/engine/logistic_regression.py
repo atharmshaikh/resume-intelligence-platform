@@ -40,19 +40,11 @@ class LogisticRegressionModel(BaseModel):
     Supports industry-standard versioning and metadata manifests.
     """
 
-    def __init__(self, metadata: Optional[ModelMetadata] = None, **kwargs) -> None:
+    def __init__(self, metadata: Optional[ModelMetadata] = None) -> None:
         super().__init__(metadata)
-
-        # Default parameters
-        params = {
-            "solver": "lbfgs",
-            "max_iter": 500,
-            "random_state": 42,
-        }
-        # Override with kwargs if provided
-        params.update(kwargs)
-
-        self.model: Optional[LogisticRegression] = LogisticRegression(**params)
+        self.model: LogisticRegression = LogisticRegression(
+            max_iter=1000, multi_class="multinomial", class_weight="balanced"
+        )
         self._feature_names: List[str] = []
         self._label_encoder: LabelEncoder = LabelEncoder()
         self._trained: bool = False
@@ -77,7 +69,7 @@ class LogisticRegressionModel(BaseModel):
     # Inference
     # ──────────────────────────────────────────────────────
 
-    def predict(self, X: Any) -> np.ndarray:
+    def predict(self, X: Any) -> np.ndarray:  # type: ignore[override]
         """Return predicted class labels."""
         self._check_trained()
         return self.model.predict(X)  # type: ignore[union-attr]
@@ -201,7 +193,6 @@ class LogisticRegressionModel(BaseModel):
         else:
             # Legacy support or direct model file
             self.model = payload  # type: ignore
-            self._trained = True
 
         self._trained = True
 

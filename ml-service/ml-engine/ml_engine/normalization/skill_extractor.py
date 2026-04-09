@@ -60,7 +60,7 @@ def _normalize_skill_token(token: str) -> str:
     normalized = _CANONICAL_ALIASES.get(normalized, normalized)
     normalized = (_SKILL_NORMALIZATION.get(normalized, normalized) or "").strip().lower()
     normalized = _CANONICAL_ALIASES.get(normalized, normalized)
-    return str(normalized)
+    return normalized or ""
 
 
 def extract_skills(text: str | List[str]) -> Tuple[List[str], int]:

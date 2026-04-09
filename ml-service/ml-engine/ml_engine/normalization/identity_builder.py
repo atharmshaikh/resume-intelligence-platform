@@ -26,7 +26,7 @@ _ORG_LOCATION_RE = re.compile(
 )
 
 # Location stopwords
-LOCATION_STOPWORDS = set(load_wordlist("locations.txt"))
+LOCATION_STOPWORDS: set[str] = set(load_wordlist("locations.txt") or [])
 
 
 def extract_identity(sections: Dict[str, List[str]], entities: Dict[str, Any], raw_text: Optional[str] = None) -> Dict[str, Any]:
