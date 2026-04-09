@@ -1,10 +1,11 @@
 """
 tests/test_prediction.py
 ========================
-Predictor logic test with a dummy 165-feature vector.
+Predictor logic test with a dummy 18-feature vector (Logistic Regression baseline).
 """
 
 import sys
+import json
 from pathlib import Path
 import pytest
 
@@ -19,19 +20,15 @@ from ml_engine.ml.schemas.feature_schema import FEATURE_SCHEMA
 
 def test_resume_predictor() -> None:
     """Predictor should return structured output with labels and probabilities."""
-<<<<<<< HEAD
-    model_path = _ROOT / "ml_engine" / "ml" / "artifacts" / "resume_rf_model.joblib"
-=======
-    model_path = _ROOT / "ml_engine" / "ml" / "artifacts" / "RANDOM_FOREST_V2026_04_01_PATCH_01.joblib"
->>>>>>> feature/optimization-and-refactor
+    model_path = _ROOT / "ml_engine" / "ml" / "artifacts" / "LOGISTIC_REGRESSION_ACTIVE.joblib"
     
     if not model_path.exists():
-        pytest.skip("Model not trained yet, skipping predictor test.")
+        pytest.skip(f"Model not found at {model_path}, skipping predictor test.")
 
     # 1. Init Predictor
     predictor = ResumePredictor(model_path)
 
-    # 2. Mock 165-feature dict (missing values fill with 0)
+    # 2. Mock feature dict (18 features for Logistic Regression)
     # Give it good stats to force a Strong prediction (2)
     features = {
         "has_name": 1,
@@ -51,7 +48,7 @@ def test_resume_predictor() -> None:
         "is_cs_it_candidate": 1
     }
     
-    # Complete the dict with zeroes so size == 165
+    # Complete the dict with zeroes so size matching the schema
     for f in FEATURE_SCHEMA.get_features():
         if f not in features:
             features[f] = 0.0
@@ -61,11 +58,12 @@ def test_resume_predictor() -> None:
     
     # 4. Assert structure
     assert isinstance(json_result, str), "Predictor MUST return a JSON string"
-    import json
     result = json.loads(json_result)
     
     assert isinstance(result, dict)
     assert "decision" in result
+    assert "score" in result
+    assert "reasons" in result
     assert "model_output" in result
     
     mp = result["model_output"]
@@ -73,18 +71,12 @@ def test_resume_predictor() -> None:
     assert "label_name" in mp
     assert "confidence" in mp
     assert "class_probs" in mp
-    assert "readiness" in mp
+    assert "model_id" in mp
+    assert "raw_label_name" in mp
 
     # 5. Assert values
     label = mp["label"]
     assert label in [0, 1, 2], f"Label must be 0, 1, or 2, got {label}"
     assert mp["class_probs"][str(label)] >= 0.33, "Highest probability class selected."
-<<<<<<< HEAD
-    assert mp["readiness"] == 85.0, "Input readiness score echoed back perfectly."
-    assert result["decision"] == "Manual Review", "Score 85 should trigger Manual Review per thresholds."
-=======
-    assert 0.0 <= mp["readiness"] <= 100.0, "Model readiness must be normalized to 0-100."
-    assert "heuristic_readiness" in mp
-    assert mp["heuristic_readiness"] == 85.0, "Heuristic readiness should be preserved for debugging."
+    assert 0.0 <= result["score"] <= 1.0, "Top-level score must be a probability (0-1)."
     assert result["decision"] in {"Rejected", "Manual Review", "Shortlisted"}
->>>>>>> feature/optimization-and-refactor
