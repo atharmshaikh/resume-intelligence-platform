@@ -38,6 +38,26 @@ inference_rules:
     min_projects: 1
     required_skills: []
 
+# ── Labeling Rules (Ground Truth) ─────────────────────────────────────────
+# These rules determine how resumes are categorized for ML training.
+# Changing these values will change the "standard" your model learns.
+labeling_rules:
+  strong_candidate:
+    min_score: 80.0        # Normalized CGPA (0-100)
+    min_projects: 2        # Project count
+    min_experience_years: 1.0
+    require_zero_typos: true
+    allow_internship_as_experience: true
+  
+  average_candidate:
+    min_score: 65.0
+    min_skills: 15
+    allow_fresher: true    # Fresher with decent score is "Average"
+  
+  penalties:
+    typo_weight: -15.0     # Applied to Readiness Score calculation
+    missing_contact: -20.0
+
 # ── Pipeline Parameters ──────────────────────────────────────────────────
 pipeline:
   n_samples: 2000

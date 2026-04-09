@@ -42,6 +42,9 @@ class ResumePredictor:
         _HERE = Path(__file__).resolve().parent
         _ML_ROOT = _HERE.parent.parent.parent
         self.artifacts_dir = _ML_ROOT / "ml_engine" / "ml" / "artifacts"
+        self.model: Any = None
+        self.wrapper: Any = None
+        self._feature_names: List[str] = []
 
         # 1. Handle Initialization Overrides
         if config_or_model_path and str(config_or_model_path).endswith(('.joblib', '.pkl')):
@@ -61,10 +64,15 @@ class ResumePredictor:
         self.rules = self.config.get("inference_rules", {})
 
         if not self.model_path.exists():
-            raise PredictorError(
-                f"Model artifact '{self.model_id}' not found at: {self.model_path}. "
-                f"Please run training or update training_config.yaml."
+            logger.warning(
+                "Model artifact '%s' not found at: %s. "
+                "Predictor will run in 'Parse-Only' mode until training is completed.",
+                self.model_id, self.model_path
             )
+            self.model = None
+            self.wrapper = None
+            self._feature_names = []
+            return
 
         # Load model wrapper via registry if possible to support XAI
         try:
@@ -138,6 +146,20 @@ class ResumePredictor:
             )
 
         # ── Step 2: ML Scoring ──────────────────────────────────
+        if self.model is None and self.wrapper is None:
+            # Model is missing (Fresh Start mode)
+            return self._build_verdict(
+                decision="Pending Training",
+                score=0.5,
+                reasons=reasons + ["Model artifact missing; decision based on parser fallback."],
+                prediction={
+                    "label": -1,
+                    "label_name": "Pending Training",
+                    "confidence": 0,
+                    "model_id": self.model_id
+                }
+            )
+
         FEATURE_SCHEMA.validate(features)
         feature_list = FEATURE_VECTOR_BUILDER.to_vector(features)
         feature_names = FEATURE_SCHEMA.get_features()

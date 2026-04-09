@@ -95,6 +95,10 @@ temp/
 # LOCAL CONFIG
 # -----------------------------
 *.local
+.cursorindexingignore
+.cursorignore
+.codex
+.qwen
 
 # C extensions
 *.so
