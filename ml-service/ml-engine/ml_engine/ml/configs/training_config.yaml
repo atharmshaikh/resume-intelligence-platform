@@ -11,7 +11,7 @@ deployment:
   active_model_id: "LOGISTIC_REGRESSION_ACTIVE"
   model_metadata:
     name: "Standard LR Engine"
-    version: "1.0.1"
+    version: "1.1.0"
     description: "Stabilized 12-feature Logistic Regression for true applicant ranking."
 
 # ── Runtime & Storage ────────────────────────────────────────────────────
