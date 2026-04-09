@@ -43,7 +43,7 @@ class LogisticRegressionModel(BaseModel):
     def __init__(self, metadata: Optional[ModelMetadata] = None) -> None:
         super().__init__(metadata)
         self.model: LogisticRegression = LogisticRegression(
-            max_iter=1000, multi_class="multinomial", class_weight="balanced"
+            max_iter=1000, class_weight="balanced"
         )
         self._feature_names: List[str] = []
         self._label_encoder: LabelEncoder = LabelEncoder()
