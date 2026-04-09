@@ -8,10 +8,9 @@
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License">
 </p>
 
-### 🚀 Overview
-An industry-grade **Resume Intelligence Platform** designed to solve the "Recruiter Fatigue" problem. This system automates the transformation of unstructured resumes into high-quality hiring decisions using a 166-feature vectorization pipeline.
+An industry-grade **Resume Intelligence Platform** designed to solve the "Recruiter Fatigue" problem. This system automates the transformation of unstructured resumes into high-quality hiring decisions using a hardened **18-signal "Extreme Depth" feature vector** optimized for true applicant ranking.
 
-It bridges the gap between raw document parsing and intelligent candidate ranking, all while maintaining a 100% offline, privacy-first data lifecycle.
+It bridges the gap between raw document parsing (Layout-Aware) and intelligent candidate ranking, all while maintaining a 100% offline, privacy-first data lifecycle.
 
 ---
 
@@ -36,7 +35,7 @@ graph TD
 
     subgraph "3. Advanced ML Inference"
         E[<b>Hard Rule Filter</b><br/>Contact/Skills Guard]:::primary
-        F[<b>ML Ranker</b><br/>Random Forest V1.0]:::secondary
+        F[<b>ML Ranker</b><br/>Logistic Regression v1.1]:::secondary
     end
 
     subgraph "4. Intelligent Routing"
@@ -53,11 +52,12 @@ graph TD
 
 ### 🔥 Key Innovations
 
-#### 🛠️ **Industry-Grade Layout Refactoring**
+#### 🛠️ **"Extreme Depth" Architectural Hardening**
 The platform is built on a modular, package-based architecture modeled after top-tier MLOps patterns. 
-*   **Core**: Unified metadata and versioning.
-*   **Engine**: Plug-and-play model registry.
-*   **Data**: Resource-optimized ingestion layers.
+*   **Core**: Unified metadata and versioning (v1.1.0).
+*   **Engine**: Plug-and-play model registry (LR/RF/XGB).
+*   **Data**: JSON-First Lifecycle—eliminating legacy CSV dependency.
+*   **Parser**: Layout-aware extraction using PyMuPDF (fitz) for complex multi-column resumes.
 
 #### 🚦 **3-Tier Routing & Hard Rejection**
 *   **Tier 1 (Shortlisted)**: Direct candidate ranking for high-potential applicants.
@@ -78,7 +78,7 @@ The platform is built on a modular, package-based architecture modeled after top
 | **Language** | ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) |
 | **Machine Learning** | ![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-F7931E?style=flat-square&logo=scikit-learn&logoColor=white) ![Joblib](https://img.shields.io/badge/Joblib-4B8BBE?style=flat-square) |
 | **Data Processing** | ![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white) ![YAML](https://img.shields.io/badge/YAML-CB171E?style=flat-square&logo=yaml&logoColor=white) |
-| **Parsing** | ![PDFMiner](https://img.shields.io/badge/PDFMiner.six-000000?style=flat-square) ![Docx](https://img.shields.io/badge/Python--Docx-4B8BBE?style=flat-square) |
+| **Parsing** | ![PyMuPDF](https://img.shields.io/badge/PyMuPDF--Fitz-000000?style=flat-square) ![Docx](https://img.shields.io/badge/Python--Docx-4B8BBE?style=flat-square) |
 | **Inference Framework** | ![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?style=flat-square&logo=streamlit&logoColor=white) |
 
 ---
@@ -88,22 +88,24 @@ The platform is built on a modular, package-based architecture modeled after top
 #### 📦 **Installation**
 The platform features automated environment management. You just need to run the setup script for your OS.
 
-**Linux/macOS:**
+**Linux/macOS (Inference & Training):**
 ```bash
 cd ml-service/ml-engine/
-./run_batch.sh
+./run_batch.sh       # Run Batch Inference
+./train_pipeline.sh  # Run End-to-End Training
 ```
 
-**Windows:**
+**Windows (Inference & Training):**
 ```cmd
 cd ml-service\ml-engine\
-run_batch.bat
+run_batch.bat        # Run Batch Inference
+train_pipeline.bat   # Run End-to-End Training
 ```
 
 #### 📂 **Input/Output Workflow**
-1.  Drop resumes into `ml_engine/data/uploads/`.
-2.  Run the batch script above.
-3.  Check `ml_engine/data/results/` for final hiring decisions.
+1.  Drop resumes into `/data/uploads/` (Project Root).
+2.  Run the batch or training script above.
+3.  Check `/data/processed/` for extraction JSONs and `/data/results/` for final decisions.
 
 ---
 
@@ -116,5 +118,5 @@ run_batch.bat
 
 <p align="center">
   <img src="https://img.shields.io/badge/Developed_With-Passion-6750A4?style=for-the-badge" alt="Passion">
-  <img src="https://img.shields.io/badge/Version-1.0.1--Stable-blue?style=for-the-badge" alt="Version">
+  <img src="https://img.shields.io/badge/Version-1.1.0--Hardened-blue?style=for-the-badge" alt="Version">
 </p>
