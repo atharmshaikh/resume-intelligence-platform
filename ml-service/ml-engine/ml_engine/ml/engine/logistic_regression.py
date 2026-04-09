@@ -1,4 +1,3 @@
-# pyre-ignore-all-errors
 """
 logistic_regression.py
 ======================
