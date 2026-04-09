@@ -25,7 +25,7 @@ def test_training_pipeline_end_to_end() -> None:
     # 2. Assert model trained
     assert isinstance(model, RandomForestModel), "Pipeline must return the model instance."
     assert model._trained is True, "Model must be marked as trained."
-    assert len(model._feature_names) == 166, f"Expected 166 features, got {len(model._feature_names)}"
+    assert len(model._feature_names) == 165, f"Expected 165 model features, got {len(model._feature_names)}"
     
     # 3. Assert artifact exists
     # Note: run_training uses the active_model_id from config

@@ -28,11 +28,11 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 
 # Core & Engine imports from refactored structure
-from ..core.model_metadata import ModelMetadata
-from ..engine.registry import ModelRegistry
-from ..data.generator import SyntheticDatasetGenerator
-from ..data.loader import DATASET_LOADER
-from ..engine.random_forest import LABEL_NAMES
+from ml_engine.ml.core.model_metadata import ModelMetadata
+from ml_engine.ml.engine.registry import ModelRegistry
+from ml_engine.ml.data.generator import SyntheticDatasetGenerator
+from ml_engine.ml.data.loader import DATASET_LOADER
+from ml_engine.ml.engine.logistic_regression import LABEL_NAMES
 
 logger = logging.getLogger(__name__)
 
@@ -96,9 +96,9 @@ def run_training(
 
     # ── Step 1: Dataset ───────────────────────────────────────────────────────
     if regenerate or not _DATASET_PATH.exists():
-        print("  [1/5] Generating fresh synthetic dataset...")
-        gen = SyntheticDatasetGenerator()
-        gen.generate(n_samples)
+        print("  [1/5] Building dataset from real resumes located in data/uploads...")
+        from ml_engine.ml.datasets.build_true_dataset import build_dataset
+        build_dataset()
     else:
         print(f"  [1/5] Reusing existing dataset: {_DATASET_PATH.name}")
 
@@ -108,12 +108,17 @@ def run_training(
     print(f"         Shape: {X_full.shape}  Labels: {dict(y_full.value_counts().sort_index())}")
 
     # ── Step 3: Split ─────────────────────────────────────────────────────────
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_full, y_full,
-        test_size=test_size,
-        stratify=y_full,
-        random_state=random_state,
-    )
+    if len(X_full) < 15:
+        print("  [3/5] Skipping split (tiny dataset, using all for training)")
+        X_train, y_train = X_full, y_full
+        X_test, y_test = X_full.copy(), y_full.copy()  # Evaluate on train set for basic sanity check
+    else:
+        X_train, X_test, y_train, y_test = train_test_split(
+            X_full, y_full,
+            test_size=test_size,
+            stratify=y_full,
+            random_state=random_state,
+        )
     print(f"  [3/5] Split → train={len(X_train)}  test={len(X_test)}")
 
     # ── Step 4: Train ─────────────────────────────────────────────────────────
@@ -143,7 +148,11 @@ def run_training(
     y_pred = model.predict(X_test)
     acc = accuracy_score(y_test, y_pred)
     print(f"  Accuracy : {acc*100:.1f}%\n")
-    print(classification_report(y_test, y_pred, target_names=_LABEL_NAMES))
+    
+    # Handle class mismatch if some classes (like 0) are missing from the tiny dataset
+    unique_labels = sorted(set(y_test) | set(y_pred))
+    target_names = [_LABEL_NAMES[i] for i in unique_labels]
+    print(classification_report(y_test, y_pred, labels=unique_labels, target_names=target_names))
 
     # Record metrics in metadata
     model.metadata.performance_metrics = {

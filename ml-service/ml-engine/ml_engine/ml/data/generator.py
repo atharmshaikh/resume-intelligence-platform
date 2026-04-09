@@ -113,7 +113,6 @@ class SyntheticDatasetGenerator:
         # G05 Experience
         if label == 2:
             feat["experience_years_estimate"] = random.uniform(2.0, 5.0)
-            feat["has_mnc_experience"] = random.choice([0, 1])
         elif label == 1:
             feat["experience_years_estimate"] = random.uniform(0.5, 2.5)
         else:

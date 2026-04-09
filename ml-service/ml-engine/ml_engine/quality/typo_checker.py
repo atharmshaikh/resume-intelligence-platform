@@ -25,6 +25,26 @@ INDIAN_EDU_TERMS = load_wordlist("common_indian_terms.txt")
 NAME_WHITELIST = load_wordlist("names_whitelist.txt")
 COMMON_WORDS = load_wordlist("common_words.txt")
 
+TECH_FRAMEWORK_WHITELIST = {
+    "firebase", "backend", "frontend", "chatbot", "mongodb",
+    "javascript", "python", "reactjs", "react", "nodejs", "node",
+    "expressjs", "express", "angularjs", "angular", "vuejs", "vue",
+    "django", "flask", "fastapi", "springboot", "spring",
+    "tensorflow", "pytorch", "keras", "scikit", "pandas", "numpy",
+    "matplotlib", "seaborn", "opencv", "git", "github", "gitlab",
+    "docker", "kubernetes", "aws", "azure", "gcp", "heroku",
+    "postgresql", "mysql", "sqlite", "redis", "elasticsearch",
+    "typescript", "golang", "rust", "kotlin", "swift", "ruby",
+    "php", "laravel", "codeigniter", "symfony", "rails", "django",
+    "bootstrap", "tailwind", "sass", "less", "webpack", "vite",
+    "graphql", "rest", "soap", "microservices", "serverless",
+    "ci/cd", "jenkins", "travis", "circleci", "terraform", "ansible",
+    "twilio", "watson", "ibm", "flask", "arduino", "esp8266", "iot",
+    "raspberry", "raspberrypi", "microcontroller", "servo", "sensor",
+    "opencv", "yolo", "cnn", "rnn", "lstm", "transformer", "bert",
+    "huggingface", "colab", "kaggle", "anaconda", "jupyter",
+}
+
 WHITELIST = (
     TECH_WHITELIST
     | RESUME_WORDS
@@ -38,6 +58,7 @@ WHITELIST = (
     | INDIAN_EDU_TERMS
     | NAME_WHITELIST
     | COMMON_WORDS
+    | TECH_FRAMEWORK_WHITELIST
 )
 
 EMAIL_PATTERN = re.compile(r"\S+@\S+")

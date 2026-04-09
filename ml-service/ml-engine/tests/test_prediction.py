@@ -19,7 +19,7 @@ from ml_engine.ml.schemas.feature_schema import FEATURE_SCHEMA
 
 def test_resume_predictor() -> None:
     """Predictor should return structured output with labels and probabilities."""
-    model_path = _ROOT / "ml_engine" / "ml" / "artifacts" / "resume_rf_model.joblib"
+    model_path = _ROOT / "ml_engine" / "ml" / "artifacts" / "RANDOM_FOREST_V2026_04_01_PATCH_01.joblib"
     
     if not model_path.exists():
         pytest.skip("Model not trained yet, skipping predictor test.")
@@ -75,5 +75,7 @@ def test_resume_predictor() -> None:
     label = mp["label"]
     assert label in [0, 1, 2], f"Label must be 0, 1, or 2, got {label}"
     assert mp["class_probs"][str(label)] >= 0.33, "Highest probability class selected."
-    assert mp["readiness"] == 85.0, "Input readiness score echoed back perfectly."
-    assert result["decision"] == "Manual Review", "Score 85 should trigger Manual Review per thresholds."
+    assert 0.0 <= mp["readiness"] <= 100.0, "Model readiness must be normalized to 0-100."
+    assert "heuristic_readiness" in mp
+    assert mp["heuristic_readiness"] == 85.0, "Heuristic readiness should be preserved for debugging."
+    assert result["decision"] in {"Rejected", "Manual Review", "Shortlisted"}

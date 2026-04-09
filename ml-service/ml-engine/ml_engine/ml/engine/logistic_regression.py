@@ -1,8 +1,8 @@
 # pyre-ignore-all-errors
 """
-random_forest.py
-================
-Industry-grade Random Forest model for resume ATS ranking.
+logistic_regression.py
+======================
+Industry-grade Logistic Regression model for resume ATS ranking.
 Part of the refined ml_engine.ml.engine package.
 """
 
@@ -16,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 
 from ..core.base_model import BaseModel
@@ -31,35 +31,30 @@ LABEL_NAMES: Dict[int, str] = {
 }
 
 
-class RandomForestError(Exception):
+class LogisticRegressionError(Exception):
     """Raised on model-level errors."""
     pass
 
 
-class RandomForestModel(BaseModel):
+class LogisticRegressionModel(BaseModel):
     """
-    Random Forest classifier for 3-class resume ranking.
+    Logistic Regression classifier for 3-class resume ranking.
     Supports industry-standard versioning and metadata manifests.
     """
 
     def __init__(self, metadata: Optional[ModelMetadata] = None, **kwargs) -> None:
         super().__init__(metadata)
-        
+
         # Default parameters
         params = {
-            "n_estimators": 300,
-            "max_depth": 12,
-            "min_samples_leaf": 3,
-            "min_samples_split": 6,
-            "max_features": "sqrt",
-            "class_weight": "balanced",
+            "solver": "lbfgs",
+            "max_iter": 500,
             "random_state": 42,
-            "n_jobs": -1,
         }
         # Override with kwargs if provided
         params.update(kwargs)
 
-        self.model: Optional[RandomForestClassifier] = RandomForestClassifier(**params)
+        self.model: Optional[LogisticRegression] = LogisticRegression(**params)
         self._feature_names: List[str] = []
         self._label_encoder: LabelEncoder = LabelEncoder()
         self._trained: bool = False
@@ -71,12 +66,12 @@ class RandomForestModel(BaseModel):
     def train(self, X: pd.DataFrame, y: pd.Series) -> None:
         """Fit the model."""
         if X.empty:
-            raise RandomForestError("Training data X is empty")
+            raise LogisticRegressionError("Training data X is empty")
 
         self._feature_names = list(X.columns)
         self.model.fit(X, y)  # type: ignore[union-attr]
         self._trained = True
-        
+
         if self.metadata:
             self.metadata.features_count = len(self._feature_names)
 
@@ -123,18 +118,53 @@ class RandomForestModel(BaseModel):
     # ──────────────────────────────────────────────────────
 
     def feature_importances(self, top_n: int = 20) -> List[Tuple[str, float]]:
-        """Return top-N features by importance."""
+        """Return top-N features by importance (using absolute coefficients)."""
         self._check_trained()
         if not self._feature_names:
             return []
 
-        importances: np.ndarray = self.model.feature_importances_  # type: ignore[union-attr]
+        # For multinomial, use mean absolute coefficient across classes
+        coef: np.ndarray = self.model.coef_  # type: ignore[union-attr]
+        importances: np.ndarray = np.mean(np.abs(coef), axis=0)
+
         pairs = sorted(
             zip(self._feature_names, importances.tolist()),
             key=lambda x: x[1],
             reverse=True,
         )
         return pairs[:top_n]
+
+    def explain_single(self, feature_vector: pd.DataFrame, target_class: int = 2, top_n: int = 3) -> Dict[str, List[Tuple[str, float]]]:
+        """Explain the prediction mathematically for XAI justifications."""
+        self._check_trained()
+        if not self._feature_names or self.model is None:
+            return {"supports": [], "detractors": []}
+            
+        classes = self.model.classes_
+        if len(classes) == 2:
+            # Binary case: coef_[0] corresponds to the higher class label
+            # e.g. if classes are [1, 2], then coef_[0] represents positive pull towards class 2
+            coef = self.model.coef_[0]
+            if target_class == classes[0]: # Lower class
+                coef = -coef
+        else:
+            # Multiclass case: coef_[idx] corresponds to target_class index in model.classes_
+            class_idx = np.where(classes == target_class)[0][0]
+            coef = self.model.coef_[class_idx]
+            
+        vector = feature_vector.iloc[0].values
+        contributions = coef * vector
+        
+        pairs = list(zip(self._feature_names, contributions.tolist()))
+        sorted_pairs = sorted(pairs, key=lambda x: x[1], reverse=True)
+        
+        supports = [p for p in sorted_pairs if p[1] > 0][:top_n]
+        detractors = [p for p in reversed(sorted_pairs) if p[1] < 0][:top_n]
+        
+        return {
+            "supports": supports,
+            "detractors": detractors
+        }
 
     # ──────────────────────────────────────────────────────
     # Persistence
@@ -144,7 +174,7 @@ class RandomForestModel(BaseModel):
         """Serialize model + metadata to disk."""
         self._check_trained()
         path = Path(path)
-        
+
         # Save model artifact
         payload = {
             "model":         self.model,
@@ -152,7 +182,7 @@ class RandomForestModel(BaseModel):
             "metadata":      self.metadata
         }
         joblib.dump(payload, path)
-        
+
         # Also save side-car metadata JSON for transparency
         if self.metadata:
             meta_path = path.with_suffix(".json")
@@ -163,7 +193,7 @@ class RandomForestModel(BaseModel):
         """Deserialize model + metadata from disk."""
         path = Path(path)
         if not path.exists():
-            raise RandomForestError(f"Model file not found: {path}")
+            raise LogisticRegressionError(f"Model file not found: {path}")
 
         payload = joblib.load(path)
         if isinstance(payload, dict) and "model" in payload:
@@ -173,7 +203,7 @@ class RandomForestModel(BaseModel):
         else:
             # Legacy support
             self.model = payload
-            
+
         self._trained = True
 
     # ──────────────────────────────────────────────────────
@@ -182,6 +212,6 @@ class RandomForestModel(BaseModel):
 
     def _check_trained(self) -> None:
         if not self._trained or self.model is None:
-            raise RandomForestError(
+            raise LogisticRegressionError(
                 "Model is not trained. Call train() or load() first."
             )

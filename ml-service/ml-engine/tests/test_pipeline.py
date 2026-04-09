@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import List
 
 # ---------------------------------------------------------------------------
 # Ensure ml_engine is importable when run directly (not via pytest/install)
@@ -38,8 +39,9 @@ from ml_engine.ml.pipelines.parsing import ResumePipeline  # noqa: E402  (after 
 
 def _find_resumes(base_dir: Path) -> List[Path]:
     """Search for PDF/Docx resumes in the data/uploads directory."""
-    # Updated: Now looking in the standardized data/uploads folder
-    resume_dir = base_dir / "ml_engine" / "data" / "uploads"
+    # Standardized uploads are stored at repo-root/data/uploads
+    repo_root = base_dir.parent.parent
+    resume_dir = repo_root / "data" / "uploads"
     
     if not resume_dir.exists():
         msg = f"Standardized uploads directory not found at: {resume_dir}. Please add resumes to begin testing."
@@ -47,22 +49,24 @@ def _find_resumes(base_dir: Path) -> List[Path]:
         return []
 
     resumes = list(resume_dir.glob("*.pdf")) + list(resume_dir.glob("*.docx"))
-    return resumes
+    return [p for p in resumes if p.exists() and p.is_file() and p.stat().st_size > 0]
 
 
 def _explain_output(result_dict: dict) -> None:
     """Print a human-readable, section-by-section explanation of the result."""
 
     sep = "─" * 60
+    identity = result_dict.get("identity", {}) if isinstance(result_dict.get("identity", {}), dict) else {}
+    quality = result_dict.get("quality_metrics", result_dict.get("quality", {}))
 
     # ── 1. Candidate identity ─────────────────────────────────────────────
     print(f"\n{sep}")
     print("  📋  CANDIDATE IDENTITY")
     print(sep)
-    print(f"  Name     : {result_dict.get('name', '—')}")
-    print(f"  Email    : {result_dict.get('email', '—')}")
-    print(f"  Phone    : {result_dict.get('phone', '—')}")
-    print(f"  Location : {result_dict.get('location', '—')}")
+    print(f"  Name     : {identity.get('name', result_dict.get('name', '—'))}")
+    print(f"  Email    : {identity.get('email', result_dict.get('email', '—'))}")
+    print(f"  Phone    : {identity.get('phone', result_dict.get('phone', '—'))}")
+    print(f"  Location : {identity.get('location', result_dict.get('location', '—'))}")
 
     # ── 2. Resume quality scores ──────────────────────────────────────────
     scores = result_dict.get("scores", {})
@@ -75,7 +79,7 @@ def _explain_output(result_dict: dict) -> None:
     print(f"  Content Score    : {scores.get('content_score', 0):.1f} / 100")
     print(f"  Length Score     : {scores.get('length_score', 0):.1f} / 100")
     print(f"  Typo Score       : {scores.get('typo_score', 0):.1f} / 100  "
-          f"({result_dict.get('quality', {}).get('typos', {}).get('typo_count', 0)} typos detected)")
+          f"({quality.get('typos', {}).get('typo_count', 0)} typos detected)")
 
     # ── 3. ML Features summary ────────────────────────────────────────────
     feats = result_dict.get("features", {})
@@ -123,8 +127,6 @@ def _explain_output(result_dict: dict) -> None:
         # Projects
         print("\n  [ Projects (G06) ]")
         print(f"    Project count              : {feats.get('projects_count', 0)}")
-        print(f"    Tech stack diversity       : {feats.get('project_tech_stack_count', 0)}")
-        print(f"    Has deployed project       : {'✅ Yes' if feats.get('has_deployed_project') else '❌ No'}")
 
         # Online presence
         print("\n  [ Online Presence (G08) ]")
@@ -182,13 +184,14 @@ def _run_pipeline() -> None:
         print(f"  📄  Processing: {resume_file.name}")
         print(f"{'═'*60}")
 
-        result = pipeline.parse(resume_file)
-        result_dict = result.to_dict()
+        result_dict = pipeline.parse(resume_file)
 
-        # Explained human-readable output
+        if result_dict is None:
+            print("  ⚠️  Skipped: failed validation or hard rules")
+            continue
+
         _explain_output(result_dict)
 
-        # Full JSON dump (for debugging)
         print("  [ Full JSON output ]")
         print(json.dumps(result_dict, indent=2, ensure_ascii=False))
 

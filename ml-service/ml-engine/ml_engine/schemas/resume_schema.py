@@ -32,7 +32,10 @@ class ResumeSchema:
         "achievements",
         "certifications",
         "interests",
+        "summary_lines",
         "languages",
+        "education_details",
+        "project_details",
 
         "features",
         "scores",
@@ -70,7 +73,10 @@ class ResumeSchema:
         self.achievements: List[str] = []
         self.certifications: List[str] = []
         self.interests: List[str] = []
+        self.summary_lines: List[str] = []
         self.languages: List[str] = []
+        self.education_details: List[Dict[str, Any]] = []
+        self.project_details: List[Dict[str, Any]] = []
    
         # -----------------------------
         # Derived pipeline outputs
@@ -105,7 +111,10 @@ class ResumeSchema:
             "achievements": list(self.achievements),
             "certifications": list(self.certifications),
             "interests": list(self.interests),
+            "summary": list(self.summary_lines),
             "languages": list(self.languages),
+            "education_details": [dict(item) for item in self.education_details],
+            "project_details": [dict(item) for item in self.project_details],
 
             # Raw parsing results
             "sections": {k: list(v) for k, v in self.sections.items()},
@@ -128,6 +137,8 @@ class ResumeSchema:
             "education": len(self.education),
             "experience": len(self.experience),
             "projects": len(self.projects),
+            "education_details": len(self.education_details),
+            "project_details": len(self.project_details),
             "sections_detected": len(self.sections or {}),
         }
     

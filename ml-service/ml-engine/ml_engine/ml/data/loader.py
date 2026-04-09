@@ -38,6 +38,10 @@ class DatasetLoader:
 
             y = df["label"]
             X = df.drop(columns=["label"])
+            if "candidate_readiness_score" in X.columns:
+                # Keep the heuristic score for analysis, but do not let the
+                # classifier learn a shortcut from a hand-built composite.
+                X = X.drop(columns=["candidate_readiness_score"])
 
             return X, y
 

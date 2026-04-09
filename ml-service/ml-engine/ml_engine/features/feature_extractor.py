@@ -66,8 +66,8 @@ _RE_DATE_RANGE  = re.compile(
     re.IGNORECASE,
 )
 _RE_CGPA        = re.compile(
-    r"(?:cgpa|gpa|percentage|aggregate|marks?|score)[:\s]*"
-    r"([0-9]{1,2}(?:[.,][0-9]{1,2})?)",
+    r"(?:cgpa|gpa|percentage|aggregate|marks?|score|grade)[:\s]*"
+    r"(\d{1,2}(?:\.\d{1,2})*)",
     re.IGNORECASE,
 )
 _RE_GITHUB_URL  = re.compile(r"github\.com/[a-zA-Z0-9_\-]+", re.IGNORECASE)
@@ -136,6 +136,8 @@ _PHD_KW: FrozenSet[str] = frozenset({"phd", "ph.d", "doctorate", "doctoral"})
 
 _BTECH_KW: FrozenSet[str] = frozenset({
     "b.tech", "btech", "b.e", "bachelor of technology", "bachelor of engineering",
+    "information technology", "computer engineering", "computer science",
+    "b.e.", "b.tech.", "engineering undergraduate",
 })
 _BCA_KW: FrozenSet[str] = frozenset({
     "bca", "b.c.a", "bachelor of computer applications",
@@ -154,10 +156,11 @@ _MSC_KW: FrozenSet[str] = frozenset({
 })
 
 _IT_CS_KW: FrozenSet[str] = frozenset({
-    "computer science", "information technology", "software engineering",
     "computer engineering", "it", "cs", "cse", "ce", "ise",
     "information science", "computer applications",
-    "electronics and communication", "ece",
+    "electronics and communication", "ece", "software engineering",
+    "engineering undergraduate", "engineering student",
+    "information technology", "computer science",
 })
 
 _HACKATHON_KW: FrozenSet[str] = frozenset({
@@ -269,14 +272,28 @@ def _count_any(text: str, kw: FrozenSet[str]) -> int:
 
 
 def _detect_cgpa(text: str) -> Optional[float]:
-    """Return the first numeric CGPA/percentage value detected, or None."""
-    m = _RE_CGPA.search(text)
-    if m:
+    """
+    Find all numeric CGPA/percentage values and return the highest valid one.
+    Handles '9.5/10', '10/10', '85%', etc.
+    """
+    matches = _RE_CGPA.findall(text)
+    if not matches:
+        return None
+
+    scores: List[float] = []
+    for m in matches:
         try:
-            return float(m.group(1).replace(",", "."))
-        except (ValueError, AttributeError):
-            pass
-    return None
+            val = float(str(m).replace(",", "."))
+            # Normalization logic: Scale 10-point CGPA to 100-point for ML consistency
+            if val <= 10.0 and val > 0:
+                normalized_val = val * 10.0
+                scores.append(normalized_val)
+            elif val > 10.0 and val <= 100.0:
+                scores.append(val)
+        except (ValueError, TypeError):
+            continue
+
+    return max(scores) if scores else None
 
 
 def _estimate_exp_years(text: str) -> float:
@@ -314,7 +331,13 @@ def _count_quantified(text: str) -> int:
 def _has_unprofessional_email(email: str) -> bool:
     """Return True if the email looks unprofessional (xXx123, childish names, etc.)."""
     local = email.split("@")[0].lower() if "@" in email else email.lower()
-    if re.search(r"(xox|sexy|cool|swag|dragonball|ninja|gamer|\d{6,})", local):
+    if re.search(r"(xox|sexy|cool|swag|dragonball|ninja|gamer)", local):
+        return True
+    
+    # Check for excessive digits unless it looks like a typical student ID (0-3 letters + digits)
+    if re.search(r"\d{6,}", local):
+        if re.fullmatch(r"[a-z]{0,3}\d{6,}", local):
+            return False
         return True
     return False
 
@@ -392,6 +415,10 @@ def extract_features(resume: ResumeSchema) -> Dict[str, Any]:  # type: ignore[mi
     proj_text  = _blob(projects)
     ach_text   = _blob(ach)
     all_text   = raw_lower          # full resume lower-cased
+
+    # DEBUG LOGS for Audit recovery
+    logger.info("AUDIT - Candidate: %s", name)
+    logger.info("AUDIT - Education Text Blob: [%s]", edu_text)
 
     # Word-level head (first 120 words) for header/name context
     _raw_words: List[str] = raw_text.split()
@@ -505,37 +532,62 @@ def extract_features(resume: ResumeSchema) -> Dict[str, Any]:  # type: ignore[mi
     # G04 – Education depth                                    (22 features)
     # ======================================================================
 
-    f["education_count"] = sum(
-        1 for line in edu
-        if any(k in line.lower() for k in WL_DEGREE) and len(line.split()) > 2
+    # Combined search text: edu section + full resume for fallback
+    # Root cause: section detector often misclassifies degree lines as unknown_
+    # sections, leaving edu_text with only dates. We must search raw_lower too.
+    _edu_or_raw = edu_text if len(edu_text.split()) > 5 else raw_lower
+
+    _STRICT_DEGREE_KWS = _BACHELOR_KW | _MASTER_KW | _DIPLOMA_KW | _PHD_KW | _BTECH_KW | _BCA_KW | _BSC_KW | _MCA_KW | _MTECH_KW | _MSC_KW
+    f["education_count"] = max(
+        sum(1 for line in edu
+            if any(k in line.lower() for k in _STRICT_DEGREE_KWS) and len(line.split()) > 2),
+        # Fallback: count degree keywords in full resume
+        sum(1 for k in {"b.tech", "btech", "diploma", "bachelor", "master"}
+            if k in raw_lower),
     )
 
-    f["has_bachelor_degree"] = int(_contains_any(edu_text, _BACHELOR_KW))
-    f["has_master_degree"]   = int(_contains_any(edu_text, _MASTER_KW))
-    f["has_diploma"]         = int(_contains_any(edu_text, _DIPLOMA_KW))
-    f["has_phd"]             = int(_contains_any(edu_text, _PHD_KW))
-    f["has_btech_be"]        = int(_contains_any(edu_text, _BTECH_KW))
-    f["has_bca"]             = int(_contains_any(edu_text, _BCA_KW))
-    f["has_bsc_it"]          = int(_contains_any(edu_text, _BSC_KW))
-    f["has_mca"]             = int(_contains_any(edu_text, _MCA_KW))
-    f["has_mtech_me"]        = int(_contains_any(edu_text, _MTECH_KW))
-    f["has_msc_it"]          = int(_contains_any(edu_text, _MSC_KW))
+    f["has_bachelor_degree"] = int(_contains_any(_edu_or_raw, _BACHELOR_KW))
+    f["has_master_degree"]   = int(_contains_any(_edu_or_raw, _MASTER_KW))
+    f["has_diploma"]         = int(_contains_any(_edu_or_raw, _DIPLOMA_KW) or "diploma" in raw_lower)
+    f["has_phd"]             = int(_contains_any(_edu_or_raw, _PHD_KW))
+    f["has_btech_be"]        = int(_contains_any(_edu_or_raw, _BTECH_KW) or "b.tech" in raw_lower)
+    f["has_bca"]             = int(_contains_any(_edu_or_raw, _BCA_KW))
+    f["has_bsc_it"]          = int(_contains_any(_edu_or_raw, _BSC_KW))
+    f["has_mca"]             = int(_contains_any(_edu_or_raw, _MCA_KW))
+    f["has_mtech_me"]        = int(_contains_any(_edu_or_raw, _MTECH_KW))
+    f["has_msc_it"]          = int(_contains_any(_edu_or_raw, _MSC_KW))
     f["has_it_major"]        = int(
-        _contains_any(edu_text, _IT_CS_KW)
+        _contains_any(_edu_or_raw, _IT_CS_KW)
         or _contains_any(raw_head, _IT_CS_KW)
+        or "information technology" in raw_lower
+        or "computer engineering" in raw_lower
     )
     f["is_cs_it_candidate"]  = int(
         bool(f["has_it_major"]) or bool(f["has_bachelor_degree"])
         or bool(f["has_btech_be"]) or bool(f["has_bca"]) or bool(f["has_mca"])
     )
-    f["has_top_institution"] = int(_contains_any(edu_text, WL_TOPINST))
+    f["has_top_institution"] = int(_contains_any(_edu_or_raw, WL_TOPINST))
 
     # CGPA / Percentage detection
-    _cgpa_raw: Optional[float] = _detect_cgpa(edu_text) or _detect_cgpa(raw_lower)
+    # Try to find CGPA specifically in Bachelor/Master lines first
+    _cgpa_raw: Optional[float] = None
+    _HIGHER_ED_KWS = _BACHELOR_KW | _MASTER_KW | _BTECH_KW | _BCA_KW | _BSC_KW | _MCA_KW | _MTECH_KW | _MSC_KW
+    for line in edu:
+        if any(k in line.lower() for k in _HIGHER_ED_KWS):
+            val = _detect_cgpa(line)
+            if val is not None:
+                _cgpa_raw = val
+                break
+
+    if _cgpa_raw is None:
+        _cgpa_raw = _detect_cgpa(edu_text)
+    if _cgpa_raw is None:
+        _cgpa_raw = _detect_cgpa(raw_lower)
+
     _cgpa: float = float(_cgpa_raw) if _cgpa_raw is not None else 0.0
     f["has_cgpa"]             = int(_cgpa_raw is not None)
     f["cgpa_value"]           = round(_cgpa, 2)  # type: ignore[call-overload]
-    f["has_strong_academics"] = int(_cgpa >= 8.0 or _cgpa >= 75.0)
+    f["has_strong_academics"] = int(_cgpa >= 8.0 or _cgpa >= 80.0)
 
     # Dual qualification (e.g., diploma + degree)
     f["has_dual_qualification"] = int(
@@ -586,7 +638,7 @@ def extract_features(resume: ResumeSchema) -> Dict[str, Any]:  # type: ignore[mi
         any(k in exp_text for k in {"freelance", "freelancer", "self-employed", "consultant"})
     )
     f["has_mnc_experience"] = int(
-        any(k in all_text for k in {
+        any(k in exp_text for k in {
             "google", "microsoft", "amazon", "meta", "apple",
             "infosys", "wipro", "tcs", "hcl", "accenture",
             "cognizant", "capgemini", "ibm", "oracle",
@@ -882,18 +934,34 @@ def extract_features(resume: ResumeSchema) -> Dict[str, Any]:  # type: ignore[mi
     _g11_ach_count:  float = float(f["achievement_count"])            # type: ignore[index]
     _g11_sk_cat:     float = float(f["skill_category_count"])         # type: ignore[index]
 
-    # Positive raw score (0–100 before penalties)
+    _is_fresher: float = float(f["is_fresher"])                   # type: ignore[index]
+    
+    # ── DYNAMIC SCORER REBALANCING ──────────────────────────────────────────
+    # If a candidate is a fresher, we redistribute "Experience" weight into 
+    # "Projects" and "Academics" to ensure a fair evaluation based on potential.
+    # ─────────────────────────────────────────────────────────────────────────
+    w_exp = 12.0
+    w_proj = 10.0
+    w_acad = 15.0
+    
+    if _is_fresher > 0:
+        # Transfer 80% of experience weight to Projects and Academics
+        w_proj += 6.0
+        w_acad += 4.0
+        w_exp  = 2.0  # Residual weight for any internships they might have
+    
+    # Positive raw score calculation
     _pos: float = (
         _g11_contact  * 10.0
-        + _g11_section  * 20.0
+        + _g11_section  * 15.0
         + float(min(_g11_sw, 30.0))
-        + _g11_hv       * 8.0
-        + _g11_proj     * 8.0
-        + _g11_exp      * 8.0
+        + _g11_hv       * 5.0
+        + _g11_proj     * w_proj
+        + _g11_exp      * w_exp
         + _g11_ach      * 5.0
+        + _g11_cgpa     * w_acad
         + _g11_linkedin * 4.0
         + _g11_github   * 4.0
-        + _g11_cgpa     * 3.0
     )
     _prs: float = round(_clamp(_pos), 2)  # type: ignore[call-overload]
     f["raw_positive_score"] = _prs

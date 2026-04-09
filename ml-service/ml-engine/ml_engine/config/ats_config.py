@@ -48,11 +48,13 @@ SECTION_KEYWORDS: Dict[str, List[str]] = {
         "academic background",
         "academic qualifications",
         "academic details",
+        "academic history",
         "qualifications",
+        "educational qualifications",
+        "professional qualifications",
+        "course",
+        "courses",
         "education and training",
-        "academic record",
-        "scholastic record",
-        "degrees",
     ],
 
     "skills": [
@@ -201,4 +203,4 @@ SKILL_STOPWORDS: Set[str] = {
 # TEXT NORMALIZATION
 # ---------------------------------------------------------------------------
 
-BULLET_CHARACTERS: List[str] = ["•", "-", "*", "▪", "◦", "▸", "►"]
+BULLET_CHARACTERS: List[str] = ["•", "●", "▪", "◦", "■", "▸", "►", "-", "*"]
