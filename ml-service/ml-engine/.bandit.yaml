@@ -1,0 +1,12 @@
+# Bandit Security Scan Configuration (Zero Trust Baseline)
+# ==========================================================
+
+# Exclude generated/data files
+exclude_dirs: ['tests', 'data', 'docs', '.venv']
+
+# Skip specific tests that are "Low" severity false positives for our ML use-case:
+# B311: Standard pseudo-random generators (used for synthetic data, not security)
+skips: ['B311']
+
+# Profiles
+# All security-relevant plugins enabled by default

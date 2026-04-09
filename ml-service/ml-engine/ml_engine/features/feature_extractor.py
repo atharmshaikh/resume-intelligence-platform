@@ -41,7 +41,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import lru_cache
-from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set
 
 from ml_engine.schemas import ResumeSchema      # type: ignore[import]
 from ml_engine.extraction import load_wordlist  # type: ignore[import]
@@ -431,8 +431,6 @@ def extract_features(resume: ResumeSchema) -> Dict[str, Any]:  # type: ignore[mi
     WL_TOOLS  = _WL("tools.txt")
     WL_HI     = _WL("high_value_skills.txt")
     WL_MID    = _WL("mid_value_skills.txt")
-    WL_DEGREE = _WL("academic_terms.txt")
-    WL_INTERN = _WL("internship_terms.txt")
     WL_LANG   = _WL("common_languages.txt")
     WL_TOPINST = _WL("top_institutes.txt")
     WL_PERSONAL = _WL("personal_info_flags.txt")

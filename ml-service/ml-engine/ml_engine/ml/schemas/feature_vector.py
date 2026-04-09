@@ -16,7 +16,7 @@ Responsibilities
 
 from typing import Dict, List, Any
 
-from .feature_schema import FEATURE_SCHEMA, FeatureSchemaError
+from .feature_schema import FEATURE_SCHEMA
 
 
 class FeatureVectorError(Exception):

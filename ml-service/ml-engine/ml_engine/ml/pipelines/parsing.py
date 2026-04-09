@@ -268,7 +268,7 @@ class ResumePipeline:
         checks["no_unknown_sections"] = all(not k.startswith("unknown_") for k in sections)
         checks["skills_dedup"] = len(resume_obj.skills) == len(set(resume_obj.skills))
         checks["skills_no_sentence"] = all(len(str(s).split()) <= 3 and not any(c in str(s) for c in ".!?") for s in resume_obj.skills)
-        checks["languages_valid"] = all(str(l).lower() in _COMMON_LANGS for l in resume_obj.languages)
+        checks["languages_valid"] = all(str(lang_code).lower() in _COMMON_LANGS for lang_code in resume_obj.languages)
         checks["project_name_not_date"] = all(not _DATE_ONLY_RE.fullmatch(str(p.get("name", "")).strip().lower()) for p in resume_obj.project_details)
         checks["project_desc_no_date"] = all(not _DATE_RANGE_RE.search(str(p.get("description", "")).lower()) for p in resume_obj.project_details)
 
@@ -317,14 +317,14 @@ class ResumePipeline:
     def _valid_experience(self, resume_obj) -> List[str]:
         out: List[str] = []
         for line in list(getattr(resume_obj, "experience", []) or []):
-            l = str(line).strip()
-            low = l.lower()
-            if not l:
+            line_val = str(line).strip()
+            low = line_val.lower()
+            if not line_val:
                 continue
             if any(k in low for k in ("hackathon", "club", "activity", "activities")):
                 continue
             if any(k in low for k in ("intern", "developer", "engineer", "analyst", "trainee", "role", "worked", "experience")):
-                out.append(l)
+                out.append(line_val)
         return out
 
     def _merge_best_candidate_components(self, candidates):
@@ -518,11 +518,11 @@ class ResumePipeline:
         }
 
         if not _validate_features(features, merged_skills):
-            logger.warning(f"Feature validation failed for resume. Skipping.")
+            logger.warning("Feature validation failed for resume. Skipping.")
             return None
 
         if not _passes_hard_rules(features):
-            logger.warning(f"Hard rules failed for resume. Skipping.")
+            logger.warning("Hard rules failed for resume. Skipping.")
             return None
 
         result = {

@@ -40,7 +40,8 @@ class TrainingPipeline:
                 project_root = current
                 break
             current = current.parent
-            if current == current.parent: break
+            if current == current.parent:
+                break
 
 
         if project_root:

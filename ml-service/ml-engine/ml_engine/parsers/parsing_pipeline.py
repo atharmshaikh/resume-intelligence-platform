@@ -14,7 +14,7 @@ Returns structured output compatible with existing pipeline.
 """
 
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pathlib import Path
 
 from ml_engine.parsers.pdf_parser import PDFParser
@@ -22,7 +22,7 @@ from ml_engine.parsers.docx_parser import DocxParser
 from ml_engine.parsers.text_cleaner import clean_text
 from ml_engine.parsers.layout_parser import normalize_layout, detect_layout_type
 from ml_engine.parsers.block_segmenter import BlockSegmenter
-from ml_engine.parsers.section_classifier import SectionClassifier, classify_sections
+from ml_engine.parsers.section_classifier import SectionClassifier
 from ml_engine.parsers.entity_extractor import extract_entities
 from ml_engine.extraction.section_detector import detect_sections as detect_sections_legacy
 

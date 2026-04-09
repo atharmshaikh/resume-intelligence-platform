@@ -14,7 +14,7 @@ import json
 import logging
 import yaml
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import numpy as np

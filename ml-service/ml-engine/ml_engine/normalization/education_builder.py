@@ -6,7 +6,7 @@ Extracts and normalizes education information from resume sections.
 
 import logging
 import re
-from typing import Any, Dict, List, TypedDict
+from typing import Dict, List, TypedDict
 
 logger = logging.getLogger(__name__)
 

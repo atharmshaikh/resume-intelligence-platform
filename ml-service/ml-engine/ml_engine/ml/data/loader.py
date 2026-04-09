@@ -12,7 +12,7 @@ import json
 import logging
 import glob
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
 from ..schemas.feature_schema import FEATURE_LIST

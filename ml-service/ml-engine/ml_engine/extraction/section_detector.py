@@ -228,7 +228,6 @@ _EXTRA_ALIASES: Dict[str, str] = {
     "courses and certifications":  "achievements",
     "certifications and awards":   "achievements",
     # projects
-    "my projects":                 "projects",
     "projects":                    "projects",
     "PROJECTS":                    "projects",
     "academic projects":           "projects",
@@ -419,7 +418,7 @@ def _calculate_section_confidence(section_name: str, content: List[str]) -> floa
     if len(content) >= 3:
         lengths = [len(line) for line in content[:10]]
         avg_length = sum(lengths) / len(lengths)
-        variance = sum((l - avg_length) ** 2 for l in lengths) / len(lengths)
+        variance = sum((length_val - avg_length) ** 2 for length_val in lengths) / len(lengths)
         
         # Low variance = consistent formatting = higher confidence
         if variance < 100:

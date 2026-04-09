@@ -17,11 +17,9 @@ Uses keyword scoring, semantic hints, and alias mapping.
 
 import logging
 import re
-from typing import Dict, List, Optional, Tuple, Set
+from typing import Dict, List, Optional
 from dataclasses import dataclass, asdict
 
-from .keyword_loader import load_wordlist
-from .extraction_utils import normalize_text, tokenize
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +73,6 @@ SECTION_ALIASES: Dict[str, str] = {
     "work history": SECTION_EXPERIENCE,
     "professional background": SECTION_EXPERIENCE,
     "career history": SECTION_EXPERIENCE,
-    "my work": SECTION_EXPERIENCE,
     
     # Projects
     "academic projects": SECTION_PROJECTS,
@@ -84,7 +81,6 @@ SECTION_ALIASES: Dict[str, str] = {
     "key projects": SECTION_PROJECTS,
     "major projects": SECTION_PROJECTS,
     "my projects": SECTION_PROJECTS,
-    "my work": SECTION_PROJECTS,
     
     # Achievements
     "awards": SECTION_ACHIEVEMENTS,

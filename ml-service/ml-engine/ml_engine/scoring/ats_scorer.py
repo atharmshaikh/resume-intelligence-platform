@@ -56,7 +56,7 @@ def score_resume(features: dict, raw_text: str, identity: dict | None = None) ->
     """
     try:
         return _score_resume_impl(features, raw_text, identity or {})
-    except Exception as exc:
+    except Exception:
         logger.exception("ATS Scoring crashed. Returning baseline 0.")
         return {
             "ats_score": 0.0,
@@ -83,8 +83,6 @@ def _score_resume_impl(features: dict, raw_text: str, identity: dict) -> Dict[st
     # STEP 1: HARD PENALTY LAYER (Critical Issues)
     # ─────────────────────────────────────────────────────────────
     
-    # Check for no valid contact - auto fail
-    has_valid_contact = _safe(features, "has_valid_contact", 0)
     has_email = bool(identity.get("email"))
     has_phone = bool(identity.get("phone"))
     

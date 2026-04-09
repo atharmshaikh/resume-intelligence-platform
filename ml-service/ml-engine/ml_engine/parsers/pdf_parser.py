@@ -19,7 +19,6 @@ from pdfminer.layout import LAParams
 
 from .base_parser import BaseParser
 from ml_engine.utils import ResumeParserError
-from .layout_parser import normalize_layout
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,6 @@ class PDFParser(BaseParser):
             doc = fitz.open(str(path))
             
             full_text = []
-            is_two_column_doc = False
             
             for page in doc:
                 blocks = page.get_text("blocks")
@@ -75,19 +73,13 @@ class PDFParser(BaseParser):
                 left_col = []
                 right_col = []
                 
-                # Heuristic: if many blocks are clearly divided by the vertical center
-                centered_gaps = 0
                 for b in blocks:
                     if b[2] < mid_x:
                         left_col.append(b[4])
-                    elif b[0] > mid_x:
-                        right_col.append(b[4])
                     else:
-                        # Spans both? Probably a header
-                        left_col.append(b[4])
+                        right_col.append(b[4])
                 
                 if len(left_col) > 4 and len(right_col) > 4:
-                    is_two_column_doc = True
                     full_text.extend(left_col)
                     full_text.extend(right_col)
                 else:

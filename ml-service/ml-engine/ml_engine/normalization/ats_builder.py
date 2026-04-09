@@ -16,22 +16,14 @@ import logging
 from typing import Any, Dict, List
 
 from ml_engine.schemas import ResumeSchema
-from ml_engine.normalization.skill_extractor import extract_skills
-from ml_engine.normalization.project_extractor import extract_project_details, clean_project_name
+from ml_engine.normalization.project_extractor import extract_project_details
 from ml_engine.normalization.identity_builder import extract_identity
 from ml_engine.normalization.skills_builder import build_skills, extract_project_skills
 from ml_engine.normalization.education_builder import build_education
 from ml_engine.normalization.experience_builder import build_experience
-from ml_engine.normalization.project_builder import build_projects
 from ml_engine.features import extract_features
-
-logger = logging.getLogger(__name__)
-
-# Re-export commonly used functions for backward compatibility
 from ml_engine.normalization.ats_builder_utils import (
     _clean_lines,
-    clean_experience,
-    clean_project_name,
     _as_plain_dicts,
     _canonicalize_sections,
     _coerce_sections_map,
@@ -39,8 +31,9 @@ from ml_engine.normalization.ats_builder_utils import (
     _clean_summary_lines,
     _clean_interest_lines,
     recompute_section_flags,
-    fix_location,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def build_ats_structure(
@@ -151,7 +144,7 @@ def build_ats_structure(
 
 def _extract_project_lines_from_sections(sections_map: Dict[str, List[str]]) -> List[str]:
     """Extract project-related lines from sections."""
-    from ml_engine.normalization.project_extractor import _PROJECT_NOISE_RE, PROJECT_DATE_RE
+    from ml_engine.normalization.project_extractor import _PROJECT_NOISE_RE
     
     if "projects" in sections_map:
         return [
