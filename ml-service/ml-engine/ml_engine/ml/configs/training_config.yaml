@@ -3,40 +3,60 @@
 # =========================================================================
 
 # Current active model architecture
-active_model: "random_forest"
+active_model: "logistic_regression"
 
 # ── Deployment Controls ──────────────────────────────────────────────────
 # The engine uses this ID to load the specific version from artifacts/
 deployment:
-  active_model_id: "RANDOM_FOREST_V2026_04_01_PATCH_01"
+  active_model_id: "LOGISTIC_REGRESSION_ACTIVE"
   model_metadata:
-    name: "Standard RF Engine"
-    version: "1.0.1"
-    description: "Stabilized 166-feature Random Forest for production ranking."
+    name: "Standard LR Engine"
+    version: "1.1.0"
+    description: "Stabilized 12-feature Logistic Regression for true applicant ranking."
 
 # ── Runtime & Storage ────────────────────────────────────────────────────
 runtime:
   storage:
-    uploads: "ml_engine/data/uploads"
-    processed: "ml_engine/data/processed"
-    results: "ml_engine/data/results"
+    uploads: "data/uploads"
+    processed: "data/processed"
+    results: "data/results"
   cleanup:
-    retention_hours: 24
-    enabled: true
+    retention_hours: 168
+    enabled: false
 
 # ── Inference & Business Rules ───────────────────────────────────────────
 # Thresholds and capacity limits for the 3-tier routing system.
 inference_rules:
   tier_thresholds:
-    shortlisted: 90
-    manual_review: 75
+    shortlisted: 0.70
+    manual_review: 0.45
   limits:
     max_shortlisted: 10
     max_manual_review: 20
   hard_requirements:
     require_contact: true
-    min_projects: 2
-    required_skills: ["Python", "Machine Learning"]
+    min_projects: 1
+    required_skills: []
+
+# ── Labeling Rules (Ground Truth) ─────────────────────────────────────────
+# These rules determine how resumes are categorized for ML training.
+# Changing these values will change the "standard" your model learns.
+labeling_rules:
+  strong_candidate:
+    min_score: 80.0        # Normalized CGPA (0-100)
+    min_projects: 2        # Project count
+    min_experience_years: 1.0
+    require_zero_typos: true
+    allow_internship_as_experience: true
+  
+  average_candidate:
+    min_score: 65.0
+    min_skills: 15
+    allow_fresher: true    # Fresher with decent score is "Average"
+  
+  penalties:
+    typo_weight: -15.0     # Applied to Readiness Score calculation
+    missing_contact: -20.0
 
 # ── Pipeline Parameters ──────────────────────────────────────────────────
 pipeline:

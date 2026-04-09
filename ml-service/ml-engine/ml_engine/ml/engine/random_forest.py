@@ -103,9 +103,10 @@ class RandomForestModel(BaseModel):
 
         class_probs = {i: round(float(p), 4) for i, p in enumerate(proba)}
 
-        readiness = 0.0
+        heuristic_readiness = 0.0
         if "candidate_readiness_score" in feature_vector.columns:
-            readiness = float(feature_vector["candidate_readiness_score"].iloc[0])
+            heuristic_readiness = float(feature_vector["candidate_readiness_score"].iloc[0])
+        readiness = round(float(proba[1]) * 55.0 + float(proba[2]) * 100.0, 2)
 
         return {
             "label":       label_int,
@@ -113,6 +114,7 @@ class RandomForestModel(BaseModel):
             "confidence":  round(float(proba[label_int]), 4),
             "class_probs": class_probs,
             "readiness":   readiness,
+            "heuristic_readiness": round(heuristic_readiness, 2),
             "model_id":    self.metadata.model_id if self.metadata else "unknown"
         }
 

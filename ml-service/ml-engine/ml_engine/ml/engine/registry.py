@@ -9,6 +9,7 @@ from typing import Dict, Type
 from ..core.base_model import BaseModel
 from .random_forest import RandomForestModel
 from .xgboost import XGBoostModel
+from .logistic_regression import LogisticRegressionModel
 
 class ModelRegistry:
     """
@@ -18,7 +19,8 @@ class ModelRegistry:
 
     MODELS: Dict[str, Type[BaseModel]] = {
         "random_forest": RandomForestModel,
-        "xgboost": XGBoostModel
+        "xgboost": XGBoostModel,
+        "logistic_regression": LogisticRegressionModel
     }
 
     @classmethod

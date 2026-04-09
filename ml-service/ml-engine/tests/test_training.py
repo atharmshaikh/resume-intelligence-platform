@@ -25,7 +25,11 @@ def test_training_pipeline_end_to_end() -> None:
     # 2. Assert model trained
     assert isinstance(model, RandomForestModel), "Pipeline must return the model instance."
     assert model._trained is True, "Model must be marked as trained."
+<<<<<<< HEAD
     assert len(model._feature_names) == 166, f"Expected 166 features, got {len(model._feature_names)}"
+=======
+    assert len(model._feature_names) == 165, f"Expected 165 model features, got {len(model._feature_names)}"
+>>>>>>> feature/optimization-and-refactor
     
     # 3. Assert artifact exists
     # Note: run_training uses the active_model_id from config
@@ -38,4 +42,8 @@ def test_training_pipeline_end_to_end() -> None:
         _ROOT = _HERE.parent
         artifact_path = _ROOT / "ml_engine" / "ml" / "artifacts" / f"{model_id}.joblib"
         
+<<<<<<< HEAD
     assert artifact_path.exists(), f"Model artifact not found at {artifact_path}"
+=======
+    assert artifact_path.exists(), f"Model artifact not found at {artifact_path}"
+>>>>>>> feature/optimization-and-refactor

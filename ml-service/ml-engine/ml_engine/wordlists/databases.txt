@@ -13,3 +13,5 @@ elasticsearch
 supabase
 cockroachdb
 neo4j
+
+sql

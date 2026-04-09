@@ -1,243 +1,170 @@
 """
-Main orchestration pipeline for resume processing.
+Resume Processing Pipeline
 
-Pipeline stages:
-1. File validation
-2. Document parsing (with Overload Protection / Timeout)
-3. Text cleaning
-4. Section detection
-5. ATS normalization
-6. Scoring & Feature Extraction
+Orchestrates the complete resume processing flow:
+1. Parse raw text from file
+2. Detect sections
+3. Extract entities
+4. Normalize into ATS format
+5. Build features
+6. Run ML prediction
+7. Save result
 """
 
-import os
+from __future__ import annotations
+
 import logging
 from pathlib import Path
-from typing import Union
-import concurrent.futures
+from typing import Any, Dict, Optional
 
-from ml_engine.config import SUPPORTED_EXTENSIONS, MAX_FILE_SIZE_MB
 from ml_engine.parsers import PDFParser, DocxParser
-from ml_engine.utils import (
-    clean_text,
-    ResumeEngineError,
-    ResumeParserError,
-    PipelineTimeoutError
-)
+from ml_engine.utils import clean_text, ResumeParserError
 from ml_engine.extraction import detect_sections, extract_entities
 from ml_engine.normalization import build_ats_structure
 from ml_engine.features import extract_features
-from ml_engine.scoring import score_resume
-from ml_engine.quality import count_typos
+from ml_engine.ml.inference.predictor import ResumePredictor
 
 logger = logging.getLogger(__name__)
 
+
 class ResumePipeline:
     """
-    Central pipeline controller for resume parsing.
+    Main pipeline for resume processing.
+    
+    Orchestrates all steps from raw file to ML prediction.
     """
 
-    def __init__(self):
-        # Initialize document parsers
+    def __init__(self, config_path: Optional[str] = None) -> None:
+        """
+        Initialize pipeline.
+        
+        Args:
+            config_path: Optional path to ML config file
+        """
         self.pdf_parser = PDFParser()
         self.docx_parser = DocxParser()
+        self.predictor = ResumePredictor(config_path) if config_path else None
+        
+        logger.info("ResumePipeline initialized")
 
-    def _validate_file(self, file_path: Path):
+    def process(self, file_path: str | Path) -> Dict[str, Any]:
         """
-        Validate resume file before processing.
+        Process a resume file through the complete pipeline.
+        
+        Args:
+            file_path: Path to resume file (PDF or DOCX)
+            
+        Returns:
+            Dictionary containing parsed data, features, and ML prediction
         """
-
-        if not file_path.exists():
-            msg = f"Resume file not found: {file_path}"
-            logger.error(msg)
-            raise ResumeEngineError(msg)
-
-        suffix = file_path.suffix.lower()
-
-        if suffix not in SUPPORTED_EXTENSIONS:
-            msg = f"Unsupported file format: {suffix}"
-            logger.error(msg)
-            raise ResumeParserError(msg)
-
-        if not os.access(file_path, os.R_OK):
-            msg = f"File is not readable: {file_path}"
-            logger.error(msg)
-            raise ResumeEngineError(msg)
-
-        # File size validation
-        size_mb = file_path.stat().st_size / (1024 * 1024)
-
-        if size_mb > MAX_FILE_SIZE_MB:
-            msg = f"File too large ({size_mb:.2f} MB). Max allowed: {MAX_FILE_SIZE_MB} MB"
-            logger.warning(msg)
-            raise ResumeParserError(msg)
-
-    def _select_parser(self, file_path: Path):
-        """
-        Select parser based on file extension.
-        """
-
-        suffix = file_path.suffix.lower()
-
-        parser_map = {
-            ".pdf": self.pdf_parser,
-            ".docx": self.docx_parser,
+        file_path = Path(file_path)
+        result: Dict[str, Any] = {
+            "file": str(file_path),
+            "identity": {},
+            "normalized_resume": {},
+            "features": {},
+            "ml_prediction": None,
         }
-
-        parser = parser_map.get(suffix)
-
-        if not parser:
-            msg = f"No parser available for {suffix}"
-            logger.error(msg)
-            raise ResumeParserError(msg)
-
-        return parser
-
-    def to_optimized_dict(self, resume_obj) -> dict:
-        """
-        Convert full ResumeSchema to a lightweight, resource-optimized dictionary.
-        Excludes raw text and internal section mapping to save space.
-        """
-        return {
-            # 1. Identity (Essential for Backend)
-            "identity": {
+        
+        try:
+            # [1/6] Parse resume
+            logger.info("[1/6] Parsing resume...")
+            raw_text = self._parse_file(file_path)
+            cleaned_text = clean_text(raw_text)
+            logger.info(f"    Parsed {len(cleaned_text)} characters")
+            
+            # [2/6] Detect sections
+            logger.info("[2/6] Detecting sections...")
+            sections = detect_sections(cleaned_text)
+            logger.info(f"    Found {len(sections)} sections: {list(sections.keys())}")
+            
+            # [3/6] Extract entities
+            logger.info("[3/6] Extracting entities...")
+            entities = extract_entities(cleaned_text)
+            logger.info(f"    Extracted: name={entities.get('name')}, email={entities.get('email')}")
+            
+            # [4/6] Build ATS structure
+            logger.info("[4/6] Building ATS structure...")
+            resume_obj = build_ats_structure(cleaned_text, sections, entities)
+            logger.info(f"    Skills: {len(resume_obj.skills)}, Projects: {len(resume_obj.project_details)}")
+            
+            # [5/6] Generate features
+            logger.info("[5/6] Generating features...")
+            features = extract_features(resume_obj)
+            logger.info(f"    Generated {len(features)} features")
+            
+            # [6/6] Run ML prediction
+            logger.info("[6/6] Running ML prediction...")
+            ml_result = None
+            if self.predictor:
+                ml_result = self.predictor.predict(features)
+                logger.info(f"    Prediction complete")
+            
+            # Build result
+            result["identity"] = {
                 "name": resume_obj.name,
                 "email": resume_obj.email,
                 "phone": resume_obj.phone,
                 "location": resume_obj.location,
-            },
-            # 2. Profile Highlights (Summarized fields)
-            "highlights": {
-                "skills": list(resume_obj.skills[:20]), # Top 20 skills
-                "education_summary": list(resume_obj.education[:3]),
-                "experience_summary": list(resume_obj.experience[:5]),
-                "project_summary": list(resume_obj.projects[:5]),
-            },
-            # 3. ML Features (The 166 vector and scores)
-            "features": dict(resume_obj.features),
-            "scores": dict(resume_obj.scores),
-            "quality_metrics": dict(resume_obj.quality)
-        }
-
-    def parse(self, file_path: Union[str, Path], timeout_seconds: float = 30.0) -> dict:
-        """
-        Execute resume processing pipeline safely and return optimized data.
-        """
-
-        file_path = Path(file_path).expanduser()
-
-        try:
-            file_path = file_path.resolve(strict=True)
-        except FileNotFoundError:
-            msg = f"Resume file not found: {file_path}"
-            logger.error(msg)
-            raise ResumeEngineError(msg)
-
-        logger.info(f"Starting ML Engine pipeline for: {file_path.name}")
-
-        # -------------------------
-        # 1. Validate file
-        # -------------------------
-        self._validate_file(file_path)
-
-        # -------------------------
-        # 2. Parse document (with ThreadPool Timeout Protection)
-        # -------------------------
-        parser = self._select_parser(file_path)
-
-        try:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(parser.parse, str(file_path))
-                raw_text = future.result(timeout=timeout_seconds)
-        except concurrent.futures.TimeoutError as exc:
-            msg = f"Pipeline Timeout: Parsing {file_path.name} exceeded {timeout_seconds} seconds. Aborted to prevent server overload."
-            logger.error(msg)
-            raise PipelineTimeoutError(msg) from exc
-        except ResumeParserError:
+            }
+            result["normalized_resume"] = {
+                "skills": list(resume_obj.skills),
+                "education": list(resume_obj.education_details) if resume_obj.education_details else [],
+                "experience": list(resume_obj.experience) if resume_obj.experience else [],
+                "projects": list(resume_obj.project_details) if resume_obj.project_details else [],
+            }
+            result["features"] = features
+            result["ml_prediction"] = ml_result
+            
+            logger.info("Pipeline completed successfully")
+            return result
+            
+        except ResumeParserError as e:
+            logger.error(f"Parsing failed: {e}")
             raise
-        except Exception as exc:
-            msg = f"Critical crash during document parsing for {file_path.name}"
-            logger.exception(msg)
-            raise ResumeParserError(msg) from exc
+        except Exception as e:
+            logger.exception(f"Pipeline failed: {e}")
+            raise
 
-        if not raw_text or len(raw_text.split()) < 15:
-            msg = f"Parser returned insufficient text for resume: {file_path.name}"
-            logger.warning(msg)
-            raise ResumeParserError(msg)
+    def _parse_file(self, file_path: Path) -> str:
+        """
+        Parse resume file based on extension.
         
-        # -------------------------
-        # 3. Clean extracted text
-        # -------------------------
-        cleaned_text = clean_text(raw_text)
-
-        # Prevent excessive processing on very large resumes for internal layers
-        MAX_TEXT_LENGTH = 200000
-
-        if len(cleaned_text) > MAX_TEXT_LENGTH:
-            logger.warning(f"Truncating internal processing length for huge resume: {file_path.name}")
-            cleaned_text = cleaned_text[:MAX_TEXT_LENGTH]
-
-        # -------------------------
-        # 4. Detect sections
-        # -------------------------
-        sections = detect_sections(cleaned_text)
-
-        # -------------------------
-        # 5. Build ATS structure
-        # -------------------------
-        resume_object = build_ats_structure(cleaned_text, sections)
-
-        # Ensure schema retains cleaned raw text
-        resume_object.raw_text = cleaned_text
-
-        # Candidate identity extraction (name, email, phone, location)
-        # -------------------------
-        # 6. Extract entities
-        # -------------------------
-        entities = extract_entities(cleaned_text)
-
-        if entities.get("name"):
-            resume_object.name = entities["name"]
-        if entities.get("email"):
-            resume_object.email = entities["email"]
-        if entities.get("phone"):
-            resume_object.phone = entities["phone"]
-        if entities.get("location"):
-            resume_object.location = entities["location"]
+        Args:
+            file_path: Path to resume file
+            
+        Returns:
+            Raw text content
+        """
+        suffix = file_path.suffix.lower()
         
-        # -------------------------
-        # 7. Feature extraction (Stage 3)
-        # -------------------------
+        if suffix == ".pdf":
+            return self.pdf_parser.parse(str(file_path))
+        elif suffix == ".docx":
+            return self.docx_parser.parse(str(file_path))
+        else:
+            raise ResumeParserError(f"Unsupported file format: {suffix}")
+
+    def parse_only(self, file_path: str | Path) -> Dict[str, Any]:
+        """
+        Parse resume without ML prediction.
+        
+        Useful for debugging or batch feature extraction.
+        
+        Args:
+            file_path: Path to resume file
+            
+        Returns:
+            Dictionary with parsed data and features (no ML prediction)
+        """
+        file_path = Path(file_path)
+        
+        # Temporarily disable predictor
+        original_predictor = self.predictor
+        self.predictor = None
+        
         try:
-            features = extract_features(resume_object)
-        except Exception as exc:
-            msg = f"Feature extraction crash for {file_path.name}"
-            logger.exception(msg)
-            raise ResumeEngineError(msg) from exc
-
-        resume_object.features = features
-
-        # -------------------------
-        # 8. ATS scoring
-        # -------------------------
-        try:
-            scores = score_resume(features, cleaned_text)
-        except Exception as exc:
-            msg = f"ATS scoring crash for {file_path.name}"
-            logger.exception(msg)
-            raise ResumeEngineError(msg) from exc
-
-        resume_object.scores = scores
-
-        # -------------------------
-        # 9. Quality analysis
-        # -------------------------
-        if not hasattr(resume_object, "quality") or resume_object.quality is None:
-            resume_object.quality = {}
-
-        resume_object.quality["typos"] = count_typos(cleaned_text)
-        
-        logger.info(f"Successfully finished pipeline processing for {file_path.name}")
-        
-        # Return only optimized data for industry-grade storage
-        return self.to_optimized_dict(resume_object)
+            result = self.process(file_path)
+            return result
+        finally:
+            self.predictor = original_predictor
